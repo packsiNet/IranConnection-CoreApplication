@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="IranConnect.API/IranConnect.API.csproj" />
+  <Project Path="IranConnect.Application/IranConnect.Application.csproj" />
+  <Project Path="IranConnect.Domain/IranConnect.Domain.csproj" />
+  <Project Path="IranConnect.Infrastructure/IranConnect.Infrastructure.csproj" />
+</Solution>
