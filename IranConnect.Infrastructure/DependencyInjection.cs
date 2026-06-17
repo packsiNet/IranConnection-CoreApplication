@@ -26,6 +26,7 @@ public static class DependencyInjection
         services.AddScoped<IPasswordHasher, PasswordHasher>();
         services.AddScoped<IEmailService, EmailService>();
         services.AddScoped<IIranianAppService, IranianAppService>();
+        services.AddScoped<IFileStorageService, LocalFileStorageService>();
 
         return services;
     }

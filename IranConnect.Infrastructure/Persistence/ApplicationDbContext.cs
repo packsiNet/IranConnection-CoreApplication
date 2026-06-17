@@ -18,6 +18,7 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<Subscription> Subscriptions => Set<Subscription>();
     public DbSet<Payment> Payments => Set<Payment>();
+    public DbSet<PaymentReceipt> PaymentReceipts => Set<PaymentReceipt>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
