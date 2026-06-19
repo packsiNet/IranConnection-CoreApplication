@@ -61,5 +61,36 @@ public class WireGuardStatsService : BackgroundService
         }
 
         await context.SaveChangesAsync(default);
+
+        await CheckBandwidthLimitsAsync(context, wireGuardService);
+    }
+
+    private async Task CheckBandwidthLimitsAsync(
+        IApplicationDbContext context,
+        IWireGuardService wireGuardService)
+    {
+        var exceededPeers = await context.WireGuardPeers
+            .Where(p =>
+                p.IsActive &&
+                p.BandwidthLimitBytes.HasValue &&
+                (p.BytesReceived + p.BytesSent) >= p.BandwidthLimitBytes.Value)
+            .ToListAsync();
+
+        foreach (var peer in exceededPeers)
+        {
+            try
+            {
+                await wireGuardService.RemovePeerAsync(peer.PublicKey);
+                peer.Deactivate();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex,
+                    "Failed to remove exceeded peer {PeerId}", peer.Id);
+            }
+        }
+
+        if (exceededPeers.Any())
+            await context.SaveChangesAsync(default);
     }
 }

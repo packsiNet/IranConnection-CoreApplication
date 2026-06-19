@@ -19,6 +19,8 @@ public class WireGuardPeerConfiguration
         builder.HasIndex(p => p.PublicKey).IsUnique();
         builder.HasIndex(p => p.AssignedIp).IsUnique();
         builder.HasIndex(p => p.UserId).IsUnique();
+        builder.Property(p => p.BandwidthLimitBytes)
+            .IsRequired(false);
         builder.HasOne(p => p.User)
             .WithOne()
             .HasForeignKey<WireGuardPeer>(p => p.UserId)

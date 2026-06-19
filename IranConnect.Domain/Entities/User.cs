@@ -81,6 +81,9 @@ public class User : AuditableEntity
     public void Deactivate()
         => IsActive = false;
 
+    public void Activate()
+        => IsActive = true;
+
     public void AttachSubscription(Subscription subscription)
         => Subscription = subscription;
 

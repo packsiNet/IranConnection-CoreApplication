@@ -42,6 +42,17 @@ public class WireGuardPeer : BaseEntity
         LastSeenAt = DateTime.UtcNow;
     }
 
+    public long? BandwidthLimitBytes { get; private set; }
+
+    public bool HasExceededBandwidth =>
+        BandwidthLimitBytes.HasValue &&
+        (BytesReceived + BytesSent) >= BandwidthLimitBytes.Value;
+
+    public long TotalBytesUsed => BytesReceived + BytesSent;
+
+    public void SetBandwidthLimit(long? limitBytes)
+        => BandwidthLimitBytes = limitBytes;
+
     public void Deactivate() => IsActive = false;
     public void Activate() => IsActive = true;
 
