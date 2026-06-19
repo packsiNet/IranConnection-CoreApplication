@@ -1,4 +1,5 @@
 using IranConnect.API.Models.Requests;
+using IranConnect.Application.Features.Auth.Commands.DeviceLogin;
 using IranConnect.Application.Features.Auth.Commands.ForgotPassword;
 using IranConnect.Application.Features.Auth.Commands.Login;
 using IranConnect.Application.Features.Auth.Commands.Logout;
@@ -51,16 +52,36 @@ public class AuthController : BaseController
         return HandleResult(result);
     }
 
-    /// <summary>تایید ایمیل</summary>
-    [HttpGet("verify-email")]
+    /// <summary>ورود/ثبت‌نام مبتنی بر دستگاه</summary>
+    [HttpPost("device-login")]
+    [EnableRateLimiting("auth")]
+    [ProducesResponseType(typeof(LoginResponse), 200)]
+    [ProducesResponseType(401)]
+    public async Task<IActionResult> DeviceLogin(
+        [FromBody] DeviceLoginRequest request,
+        CancellationToken cancellationToken)
+    {
+        var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
+        var deviceInfo = HttpContext.Request.Headers["User-Agent"].ToString();
+
+        var command = new DeviceLoginCommand(
+            request.DeviceId,
+            deviceInfo,
+            ipAddress);
+
+        var result = await Mediator.Send(command, cancellationToken);
+        return HandleResult(result);
+    }
+
+    /// <summary>تایید ایمیل با کد</summary>
+    [HttpPost("verify-email")]
+    [EnableRateLimiting("auth")]
     [ProducesResponseType(200)]
     [ProducesResponseType(400)]
     public async Task<IActionResult> VerifyEmail(
-        [FromQuery] string email,
-        [FromQuery] string token,
+        [FromBody] VerifyEmailCommand command,
         CancellationToken cancellationToken)
     {
-        var command = new VerifyEmailCommand(email, token);
         var result = await Mediator.Send(command, cancellationToken);
         return HandleResult(result);
     }

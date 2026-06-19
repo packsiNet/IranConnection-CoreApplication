@@ -10,14 +10,10 @@ public class UpgradeSubscriptionCommandHandler
     : IRequestHandler<UpgradeSubscriptionCommand, Result<SubscriptionResponse>>
 {
     private readonly IApplicationDbContext _context;
-    private readonly IIranianAppService _iranianAppService;
 
-    public UpgradeSubscriptionCommandHandler(
-        IApplicationDbContext context,
-        IIranianAppService iranianAppService)
+    public UpgradeSubscriptionCommandHandler(IApplicationDbContext context)
     {
         _context = context;
-        _iranianAppService = iranianAppService;
     }
 
     public async Task<Result<SubscriptionResponse>> Handle(
@@ -36,9 +32,6 @@ public class UpgradeSubscriptionCommandHandler
         subscription.Upgrade(request.DurationDays);
         await _context.SaveChangesAsync(cancellationToken);
 
-        var allowedApps = _iranianAppService
-            .GetAllowedApps(subscription.Plan);
-
         return Result<SubscriptionResponse>.Success(
             new SubscriptionResponse(
                 subscription.Plan.ToString(),
@@ -46,10 +39,6 @@ public class UpgradeSubscriptionCommandHandler
                 subscription.StartDate,
                 subscription.ExpireDate,
                 subscription.DaysRemaining,
-                subscription.IsActive,
-                allowedApps.Select(a => new AllowedAppResponse(
-                    a.PackageName,
-                    a.NameEn,
-                    a.NameFa)).ToList()));
+                subscription.IsActive));
     }
 }

@@ -5,5 +5,5 @@ namespace IranConnect.Application.Features.Auth.Commands.ResetPassword;
 
 public record ResetPasswordCommand(
     string Email,
-    string Token,
+    string Code,
     string NewPassword) : IRequest<Result<string>>;

@@ -4,6 +4,8 @@ using IranConnect.Application.Features.Admin.Commands.DeactivateUser;
 using IranConnect.Application.Features.Admin.Commands.ReviewReceipt;
 using IranConnect.Application.Features.Admin.Queries.GetPendingReceipts;
 using IranConnect.Application.Features.Admin.Queries.GetReceiptFile;
+using IranConnect.Application.Features.Admin.Queries.GetOnlineStats;
+using IranConnect.Application.Features.Admin.Queries.GetPeerStats;
 using IranConnect.Application.Features.Admin.Queries.GetStats;
 using IranConnect.Application.Features.Admin.Queries.GetUsers;
 using IranConnect.Application.Features.Subscription.Commands.UpgradeSubscription;
@@ -144,5 +146,29 @@ public class AdminController : BaseController
 
         var bytes = await System.IO.File.ReadAllBytesAsync(fullPath, cancellationToken);
         return File(bytes, contentType, result.Data.OriginalFileName);
+    }
+
+    /// <summary>آمار همه peers</summary>
+    [HttpGet("vpn/peers")]
+    [ProducesResponseType(typeof(List<PeerStatsResponse>), 200)]
+    public async Task<IActionResult> GetPeerStats(
+        CancellationToken cancellationToken)
+    {
+        var result = await Mediator.Send(
+            new GetPeerStatsQuery(),
+            cancellationToken);
+        return HandleResult(result);
+    }
+
+    /// <summary>کاربران آنلاین همزمان</summary>
+    [HttpGet("vpn/online")]
+    [ProducesResponseType(typeof(OnlineStatsResponse), 200)]
+    public async Task<IActionResult> GetOnlineStats(
+        CancellationToken cancellationToken)
+    {
+        var result = await Mediator.Send(
+            new GetOnlineStatsQuery(),
+            cancellationToken);
+        return HandleResult(result);
     }
 }

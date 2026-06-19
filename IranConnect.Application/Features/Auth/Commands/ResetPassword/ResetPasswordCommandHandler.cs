@@ -32,8 +32,8 @@ public class ResetPasswordCommandHandler
         if (user is null)
             return Result<string>.Failure("کاربر یافت نشد", 404);
 
-        if (!user.IsPasswordResetTokenValid(request.Token))
-            return Result<string>.Failure("توکن نامعتبر یا منقضی شده است", 400);
+        if (!user.IsPasswordResetTokenValid(request.Code))
+            return Result<string>.Failure("کد نامعتبر یا منقضی شده است", 400);
 
         var newHash = _passwordHasher.Hash(request.NewPassword);
         user.ResetPassword(newHash);

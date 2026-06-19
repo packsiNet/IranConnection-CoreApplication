@@ -31,7 +31,7 @@ public class ForgotPasswordCommandHandler
         // Always return success to prevent email enumeration
         if (user is null)
             return Result<string>.Success(
-                "اگر این ایمیل ثبت شده باشد، لینک بازیابی ارسال می‌شود");
+                "اگر این ایمیل ثبت شده باشد، کد بازیابی ارسال می‌شود");
 
         user.SetPasswordResetToken();
         await _context.SaveChangesAsync(cancellationToken);
@@ -42,6 +42,6 @@ public class ForgotPasswordCommandHandler
             cancellationToken);
 
         return Result<string>.Success(
-            "اگر این ایمیل ثبت شده باشد، لینک بازیابی ارسال می‌شود");
+            "اگر این ایمیل ثبت شده باشد، کد بازیابی ارسال می‌شود");
     }
 }

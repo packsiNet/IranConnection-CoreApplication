@@ -19,6 +19,7 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<Subscription> Subscriptions => Set<Subscription>();
     public DbSet<Payment> Payments => Set<Payment>();
     public DbSet<PaymentReceipt> PaymentReceipts => Set<PaymentReceipt>();
+    public DbSet<WireGuardPeer> WireGuardPeers => Set<WireGuardPeer>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -34,6 +35,7 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
             IsEmailVerified = true,
             IsActive = true,
             IsAdmin = true,
+            IsDeviceUser = false,
             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)
         });
 

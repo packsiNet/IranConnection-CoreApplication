@@ -10,6 +10,7 @@ public interface IApplicationDbContext
     DbSet<Subscription> Subscriptions { get; }
     DbSet<Payment> Payments { get; }
     DbSet<PaymentReceipt> PaymentReceipts { get; }
+    DbSet<WireGuardPeer> WireGuardPeers { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
 }

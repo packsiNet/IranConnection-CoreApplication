@@ -5,4 +5,4 @@ namespace IranConnect.Application.Features.Auth.Commands.VerifyEmail;
 
 public record VerifyEmailCommand(
     string Email,
-    string Token) : IRequest<Result<string>>;
+    string Code) : IRequest<Result<string>>;

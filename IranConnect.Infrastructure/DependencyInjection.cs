@@ -1,4 +1,5 @@
 using IranConnect.Application.Common.Interfaces;
+using IranConnect.Infrastructure.BackgroundServices;
 using IranConnect.Infrastructure.Persistence;
 using IranConnect.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
@@ -27,6 +28,9 @@ public static class DependencyInjection
         services.AddScoped<IEmailService, EmailService>();
         services.AddScoped<IIranianAppService, IranianAppService>();
         services.AddScoped<IFileStorageService, LocalFileStorageService>();
+        services.AddScoped<IWireGuardService, WireGuardService>();
+        services.AddScoped<IVpnConfigService, VpnConfigService>();
+        services.AddHostedService<WireGuardStatsService>();
 
         return services;
     }

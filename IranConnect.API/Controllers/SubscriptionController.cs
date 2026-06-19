@@ -1,5 +1,5 @@
 using IranConnect.Application.Features.Subscription.Commands.UpgradeSubscription;
-using IranConnect.Application.Features.Subscription.Queries.GetAllowedApps;
+using IranConnect.Application.Features.Subscription.Queries.GetAppCatalog;
 using IranConnect.Application.Features.Subscription.Queries.GetSubscription;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -27,18 +27,14 @@ public class SubscriptionController : BaseController
         return HandleResult(result);
     }
 
-    /// <summary>لیست اپ‌های مجاز بر اساس پلن</summary>
+    /// <summary>کاتالوگ کامل اپ‌های پشتیبانی‌شده (هر اپ با پرچم isFree)</summary>
     [HttpGet("apps")]
-    [ProducesResponseType(typeof(List<AllowedAppResponse>), 200)]
-    public async Task<IActionResult> GetAllowedApps(
+    [ProducesResponseType(typeof(List<AppCatalogResponse>), 200)]
+    public async Task<IActionResult> GetAppCatalog(
         CancellationToken cancellationToken)
     {
-        var userId = GetCurrentUserId();
-        if (userId is null)
-            return Unauthorized();
-
         var result = await Mediator.Send(
-            new GetAllowedAppsQuery(userId.Value),
+            new GetAppCatalogQuery(),
             cancellationToken);
 
         return HandleResult(result);

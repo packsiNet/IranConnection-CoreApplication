@@ -20,33 +20,25 @@ public class EmailService : IEmailService
         _logger = logger;
     }
 
-    public async Task SendVerificationEmailAsync(string email, string token, CancellationToken cancellationToken)
+    public async Task SendVerificationEmailAsync(string email, string code, CancellationToken cancellationToken)
     {
-        var verifyUrl =
-            $"{_configuration["App:BaseUrl"]}/api/auth/verify-email" +
-            $"?email={Uri.EscapeDataString(email)}&token={token}";
-
         await SendEmailAsync(
             email,
-            "تایید ایمیل IranConnect",
-            $"<p>برای تایید ایمیل خود روی لینک زیر کلیک کنید:</p>" +
-            $"<a href='{verifyUrl}'>{verifyUrl}</a>" +
-            $"<p>این لینک ۲۴ ساعت معتبر است.</p>",
+            "کد تایید ایمیل IranConnect",
+            $"<p>کد تایید ایمیل شما:</p>" +
+            $"<h2 style='letter-spacing:4px'>{code}</h2>" +
+            $"<p>این کد ۱۵ دقیقه معتبر است.</p>",
             cancellationToken);
     }
 
-    public async Task SendPasswordResetEmailAsync(string email, string token, CancellationToken cancellationToken)
+    public async Task SendPasswordResetEmailAsync(string email, string code, CancellationToken cancellationToken)
     {
-        var resetUrl =
-            $"{_configuration["App:BaseUrl"]}/reset-password" +
-            $"?email={Uri.EscapeDataString(email)}&token={token}";
-
         await SendEmailAsync(
             email,
-            "بازیابی پسورد IranConnect",
-            $"<p>برای بازیابی پسورد روی لینک زیر کلیک کنید:</p>" +
-            $"<a href='{resetUrl}'>{resetUrl}</a>" +
-            $"<p>این لینک ۱ ساعت معتبر است.</p>",
+            "کد بازیابی پسورد IranConnect",
+            $"<p>کد بازیابی پسورد شما:</p>" +
+            $"<h2 style='letter-spacing:4px'>{code}</h2>" +
+            $"<p>این کد ۱۵ دقیقه معتبر است.</p>",
             cancellationToken);
     }
 

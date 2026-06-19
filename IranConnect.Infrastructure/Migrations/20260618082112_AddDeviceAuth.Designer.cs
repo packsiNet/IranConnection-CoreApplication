@@ -3,6 +3,7 @@ using System;
 using IranConnect.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace IranConnect.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260618082112_AddDeviceAuth")]
+    partial class AddDeviceAuth
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -335,65 +338,6 @@ namespace IranConnect.Infrastructure.Migrations
                         });
                 });
 
-            modelBuilder.Entity("IranConnect.Domain.Entities.WireGuardPeer", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("AssignedIp")
-                        .IsRequired()
-                        .HasMaxLength(32)
-                        .HasColumnType("character varying(32)");
-
-                    b.Property<long>("BytesReceived")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("BytesSent")
-                        .HasColumnType("bigint");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
-
-                    b.Property<DateTime?>("LastHandshake")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("LastSeenAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("PrivateKey")
-                        .IsRequired()
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)");
-
-                    b.Property<string>("PublicKey")
-                        .IsRequired()
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AssignedIp")
-                        .IsUnique();
-
-                    b.HasIndex("PublicKey")
-                        .IsUnique();
-
-                    b.HasIndex("UserId")
-                        .IsUnique();
-
-                    b.ToTable("WireGuardPeers");
-                });
-
             modelBuilder.Entity("IranConnect.Domain.Entities.Payment", b =>
                 {
                     b.HasOne("IranConnect.Domain.Entities.Subscription", "Subscription")
@@ -440,17 +384,6 @@ namespace IranConnect.Infrastructure.Migrations
                     b.HasOne("IranConnect.Domain.Entities.User", "User")
                         .WithOne("Subscription")
                         .HasForeignKey("IranConnect.Domain.Entities.Subscription", "UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("IranConnect.Domain.Entities.WireGuardPeer", b =>
-                {
-                    b.HasOne("IranConnect.Domain.Entities.User", "User")
-                        .WithOne()
-                        .HasForeignKey("IranConnect.Domain.Entities.WireGuardPeer", "UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 

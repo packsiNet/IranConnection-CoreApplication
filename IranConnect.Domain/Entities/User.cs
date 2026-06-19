@@ -16,6 +16,8 @@ public class User : AuditableEntity
     public DateTime? EmailVerificationTokenExpiry { get; private set; }
     public string? PasswordResetToken { get; private set; }
     public DateTime? PasswordResetTokenExpiry { get; private set; }
+    public string? DeviceId { get; private set; }
+    public bool IsDeviceUser { get; private set; }
 
     public ICollection<RefreshToken> RefreshTokens { get; private set; }
         = new List<RefreshToken>();
@@ -30,9 +32,27 @@ public class User : AuditableEntity
             Email = email.ToLowerInvariant().Trim(),
             PasswordHash = passwordHash,
             FullName = fullName,
-            EmailVerificationToken = GenerateSecureToken(),
-            EmailVerificationTokenExpiry = DateTime.UtcNow.AddHours(24)
+            EmailVerificationToken = GenerateCode(),
+            EmailVerificationTokenExpiry = DateTime.UtcNow.AddMinutes(15)
         };
+    }
+
+    public static User CreateDeviceUser(string deviceId, string passwordHash)
+    {
+        return new User
+        {
+            Email = $"device_{deviceId}@iranconnect.internal",
+            PasswordHash = passwordHash,
+            IsEmailVerified = true,
+            IsActive = true,
+            IsDeviceUser = true,
+            DeviceId = deviceId
+        };
+    }
+
+    public void UpdateDevicePassword(string newPasswordHash)
+    {
+        PasswordHash = newPasswordHash;
     }
 
     public void VerifyEmail()
@@ -44,8 +64,8 @@ public class User : AuditableEntity
 
     public void SetPasswordResetToken()
     {
-        PasswordResetToken = GenerateSecureToken();
-        PasswordResetTokenExpiry = DateTime.UtcNow.AddHours(1);
+        PasswordResetToken = GenerateCode();
+        PasswordResetTokenExpiry = DateTime.UtcNow.AddMinutes(15);
     }
 
     public void ResetPassword(string newPasswordHash)
@@ -69,19 +89,19 @@ public class User : AuditableEntity
 
     public void RegenerateVerificationToken()
     {
-        EmailVerificationToken = GenerateSecureToken();
-        EmailVerificationTokenExpiry = DateTime.UtcNow.AddHours(24);
+        EmailVerificationToken = GenerateCode();
+        EmailVerificationTokenExpiry = DateTime.UtcNow.AddMinutes(15);
     }
 
-    public bool IsEmailVerificationTokenValid(string token)
-        => EmailVerificationToken == token &&
+    public bool IsEmailVerificationTokenValid(string code)
+        => EmailVerificationToken == code &&
            EmailVerificationTokenExpiry > DateTime.UtcNow;
 
-    public bool IsPasswordResetTokenValid(string token)
-        => PasswordResetToken == token &&
+    public bool IsPasswordResetTokenValid(string code)
+        => PasswordResetToken == code &&
            PasswordResetTokenExpiry > DateTime.UtcNow;
 
-    private static string GenerateSecureToken()
-        => Convert.ToBase64String(RandomNumberGenerator.GetBytes(32))
-            .Replace("+", "-").Replace("/", "_").Replace("=", "");
+    // 6-digit numeric code, sent by email and verified in-app
+    private static string GenerateCode()
+        => RandomNumberGenerator.GetInt32(0, 1_000_000).ToString("D6");
 }

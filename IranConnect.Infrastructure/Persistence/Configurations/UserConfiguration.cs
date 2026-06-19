@@ -20,6 +20,11 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
             .HasMaxLength(128);
         builder.Property(u => u.PasswordResetToken)
             .HasMaxLength(128);
+        builder.Property(u => u.DeviceId)
+            .HasMaxLength(128);
+        builder.HasIndex(u => u.DeviceId)
+            .IsUnique()
+            .HasFilter("\"DeviceId\" IS NOT NULL");
         builder.HasOne(u => u.Subscription)
             .WithOne(s => s.User)
             .HasForeignKey<Subscription>(s => s.UserId)

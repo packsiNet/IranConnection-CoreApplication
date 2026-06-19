@@ -28,8 +28,8 @@ public class VerifyEmailCommandHandler
         if (user.IsEmailVerified)
             return Result<string>.Failure("ایمیل قبلاً تایید شده است", 400);
 
-        if (!user.IsEmailVerificationTokenValid(request.Token))
-            return Result<string>.Failure("توکن نامعتبر یا منقضی شده است", 400);
+        if (!user.IsEmailVerificationTokenValid(request.Code))
+            return Result<string>.Failure("کد نامعتبر یا منقضی شده است", 400);
 
         user.VerifyEmail();
         await _context.SaveChangesAsync(cancellationToken);
