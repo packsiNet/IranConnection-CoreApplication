@@ -21,38 +21,33 @@ public class WireGuardService : IWireGuardService
     public async Task<(string publicKey, string privateKey)>
         GenerateKeyPairAsync()
     {
-        // Generate private key
-        var privateKeyResult = await RunCommandAsync("wg genkey");
-        var privateKey = privateKeyResult.Trim();
-
-        // Derive public key from private key
-        var publicKeyResult = await RunCommandAsync(
-            $"echo '{privateKey}' | wg pubkey");
-        var publicKey = publicKeyResult.Trim();
-
+        var privateKey = (await RunCommandAsync("sudo wg genkey")).Trim();
+        // WireGuard keys are base64 — safe inside single-quotes
+        var publicKey = (await RunCommandAsync(
+            $"echo '{privateKey}' | sudo wg pubkey")).Trim();
         return (publicKey, privateKey);
     }
 
     public async Task AddPeerAsync(string publicKey, string assignedIp)
     {
-        // Extract IP without CIDR for allowed-ips
         var ip = assignedIp.Split('/')[0];
+        var iface = _configuration["WireGuard:Interface"] ?? "wg0";
 
         await RunCommandAsync(
-            $"wg set wg0 peer {publicKey} allowed-ips {ip}/32");
-
-        // Save config to persist after reboot
-        await RunCommandAsync("wg-quick save wg0");
+            $"sudo wg set {iface} peer {publicKey} allowed-ips {ip}/32");
+        await RunCommandAsync($"sudo wg-quick save {iface}");
 
         _logger.LogInformation(
-            "WireGuard peer added: {PublicKey} → {Ip}",
+            "WireGuard peer added: {PublicKey} -> {Ip}",
             publicKey[..8] + "...", assignedIp);
     }
 
     public async Task RemovePeerAsync(string publicKey)
     {
-        await RunCommandAsync($"wg set wg0 peer {publicKey} remove");
-        await RunCommandAsync("wg-quick save wg0");
+        var iface = _configuration["WireGuard:Interface"] ?? "wg0";
+
+        await RunCommandAsync($"sudo wg set {iface} peer {publicKey} remove");
+        await RunCommandAsync($"sudo wg-quick save {iface}");
 
         _logger.LogInformation(
             "WireGuard peer removed: {PublicKey}",
@@ -61,7 +56,8 @@ public class WireGuardService : IWireGuardService
 
     public async Task<List<WireGuardPeerStats>> GetAllPeerStatsAsync()
     {
-        var output = await RunCommandAsync("wg show wg0 dump");
+        var iface = _configuration["WireGuard:Interface"] ?? "wg0";
+        var output = await RunCommandAsync($"sudo wg show {iface} dump");
         var stats = new List<WireGuardPeerStats>();
 
         foreach (var line in output.Split('\n').Skip(1))

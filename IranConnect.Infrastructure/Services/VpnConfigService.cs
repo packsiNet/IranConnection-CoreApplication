@@ -68,24 +68,25 @@ public class VpnConfigService : IVpnConfigService
             .Select(p => p.AssignedIp)
             .ToListAsync();
 
-        // Start from 10.0.0.2 (10.0.0.1 is server)
+        // Parse configured subnet (e.g. "10.0.0.0/24") to derive base octets.
+        // Server always occupies .1; clients start at .2.
+        var subnet = _configuration["WireGuard:Subnet"] ?? "10.0.0.0/24";
+        var baseOctets = subnet.Split('/')[0].Split('.');
+        var o1 = baseOctets[0];
+        var o2 = baseOctets[1];
+        var o3 = baseOctets[2];
+
+        // /24 → 253 clients (.2 … .254). Extend subnet to /23 in config for more.
         for (int i = 2; i <= 254; i++)
         {
-            var candidate = $"10.0.0.{i}/32";
-            if (!usedIps.Contains(candidate))
-                return candidate;
-        }
-
-        // If 10.0.0.x is full, move to 10.0.1.x
-        for (int i = 1; i <= 254; i++)
-        {
-            var candidate = $"10.0.1.{i}/32";
+            var candidate = $"{o1}.{o2}.{o3}.{i}/32";
             if (!usedIps.Contains(candidate))
                 return candidate;
         }
 
         throw new InvalidOperationException(
-            "No available IP addresses");
+            $"No available IP addresses in subnet {subnet}. " +
+            "Extend WireGuard:Subnet to a larger range (e.g. 10.0.0.0/16).");
     }
 
     private WireGuardClientConfig BuildConfig(WireGuardPeer peer)
@@ -95,6 +96,8 @@ public class VpnConfigService : IVpnConfigService
             peer.AssignedIp,
             _configuration["WireGuard:ServerPublicKey"]!,
             _configuration["WireGuard:ServerEndpoint"]!,
-            _configuration["WireGuard:Dns"] ?? "1.1.1.1");
+            _configuration["WireGuard:Dns"] ?? "1.1.1.1",
+            // Full tunnel — per-app split tunneling enforced by Android VpnService
+            _configuration["WireGuard:ClientAllowedIPs"] ?? "0.0.0.0/0, ::/0");
     }
 }

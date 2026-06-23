@@ -25,6 +25,7 @@ public class GetVpnConfigQueryHandler
                 config.AssignedIp,
                 config.ServerPublicKey,
                 config.ServerEndpoint,
-                config.Dns));
+                config.Dns,
+                config.AllowedIPs));
     }
 }

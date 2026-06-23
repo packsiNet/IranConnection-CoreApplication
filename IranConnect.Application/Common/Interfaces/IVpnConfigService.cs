@@ -10,4 +10,6 @@ public record WireGuardClientConfig(
     string AssignedIp,
     string ServerPublicKey,
     string ServerEndpoint,
-    string Dns);
+    string Dns,
+    // Traffic routed through tunnel. Split-tunneling is per-app on Android side.
+    string AllowedIPs);

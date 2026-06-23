@@ -10,6 +10,13 @@ using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Load server-specific overrides written by setup-wireguard-server.sh.
+// Contains WireGuard:ServerPublicKey and WireGuard:ServerEndpoint for this host.
+builder.Configuration.AddJsonFile(
+    "/etc/iranconnect/appsettings.Production.json",
+    optional: true,
+    reloadOnChange: false);
+
 // Add services to the container.
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);

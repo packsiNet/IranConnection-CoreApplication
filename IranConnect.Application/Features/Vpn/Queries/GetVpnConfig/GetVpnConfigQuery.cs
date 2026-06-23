@@ -11,4 +11,5 @@ public record VpnConfigResponse(
     string AssignedIp,
     string ServerPublicKey,
     string ServerEndpoint,
-    string Dns);
+    string Dns,
+    string AllowedIPs);
