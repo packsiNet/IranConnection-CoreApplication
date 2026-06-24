@@ -1,0 +1,195 @@
+name: CI/CD — IranConnect Core
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# ── Global constants ───────────────────────────────────────────────────────────
+env:
+  DOTNET_VERSION: '8.0.x'
+  # Change this to your actual admin email for Let's Encrypt notifications
+  CERTBOT_EMAIL: 'admin@packsi.net'
+
+# ══════════════════════════════════════════════════════════════════════════════
+# JOB 1 — Build & Publish
+# ══════════════════════════════════════════════════════════════════════════════
+jobs:
+  build:
+    name: Build & Publish
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── Checkout ──────────────────────────────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ── .NET SDK ──────────────────────────────────────────────────────────
+      - name: Setup .NET ${{ env.DOTNET_VERSION }}
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      # ── Restore ───────────────────────────────────────────────────────────
+      - name: Restore NuGet packages
+        run: dotnet restore
+
+      # ── Build ─────────────────────────────────────────────────────────────
+      - name: Build (Release)
+        run: dotnet build --configuration Release --no-restore
+
+      # ── Publish ───────────────────────────────────────────────────────────
+      - name: Publish API
+        run: |
+          dotnet publish IranConnect.API/IranConnect.API.csproj \
+            --configuration Release \
+            --output ./publish \
+            --no-build \
+            --self-contained false
+
+      # ── EF Migrations Bundle ──────────────────────────────────────────────
+      # Creates a self-contained binary that applies EF migrations on the server
+      # without needing the .NET SDK installed there.
+      - name: Install EF CLI tools
+        run: dotnet tool install --global dotnet-ef
+
+      - name: Create EF migrations bundle (linux-x64)
+        run: |
+          export PATH="$PATH:$HOME/.dotnet/tools"
+          dotnet ef migrations bundle \
+            --project IranConnect.Infrastructure/IranConnect.Infrastructure.csproj \
+            --startup-project IranConnect.API/IranConnect.API.csproj \
+            --output ./publish/efbundle \
+            --self-contained \
+            --runtime linux-x64 \
+            --force
+
+      # ── Upload artifact ───────────────────────────────────────────────────
+      - name: Upload publish artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-publish
+          path: ./publish
+          retention-days: 1
+
+# ══════════════════════════════════════════════════════════════════════════════
+# JOB 2 — Deploy to Server
+# ══════════════════════════════════════════════════════════════════════════════
+  deploy:
+    name: Deploy to Server
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── Checkout (needed for server/bootstrap.sh + server/setup-wireguard-server.sh) ──
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ── Download built artifact ───────────────────────────────────────────
+      - name: Download publish artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: app-publish
+          path: ./publish
+
+      # ── SSH key setup ─────────────────────────────────────────────────────
+      # SERVER_SSH_KEY secret must be the SSH private key encoded as base64.
+      # To encode: base64 -w 0 ~/.ssh/id_rsa | xclip
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SERVER_SSH_KEY }}" | base64 --decode > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan \
+            -p "${{ secrets.SERVER_PORT }}" \
+            -H "${{ secrets.SERVER_HOST }}" \
+            >> ~/.ssh/known_hosts 2>/dev/null
+
+      # ── Transfer application files ────────────────────────────────────────
+      - name: Transfer application files to server
+        run: |
+          ssh -i ~/.ssh/deploy_key \
+              -p "${{ secrets.SERVER_PORT }}" \
+              "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
+              "mkdir -p /tmp/iranconnect-deploy"
+
+          rsync -az --delete \
+            -e "ssh -i ~/.ssh/deploy_key -p ${{ secrets.SERVER_PORT }}" \
+            ./publish/ \
+            "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/tmp/iranconnect-deploy/"
+
+      # ── Transfer server scripts ───────────────────────────────────────────
+      - name: Transfer server scripts
+        run: |
+          scp -i ~/.ssh/deploy_key \
+              -P "${{ secrets.SERVER_PORT }}" \
+              server/setup-wireguard-server.sh \
+              server/bootstrap.sh \
+              "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/tmp/"
+
+      # ── Write CI/CD config to server ──────────────────────────────────────
+      # This file is re-written on every deploy. It does NOT contain generated
+      # secrets (DB password, JWT key) — those are in /etc/iranconnect/secrets.env
+      # which is created once and never overwritten by CI.
+      - name: Write CI/CD config to server
+        env:
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+          SERVER_PORT: ${{ secrets.SERVER_PORT }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+          APP_URL: ${{ secrets.APP_URL }}
+          CERTBOT_EMAIL: ${{ env.CERTBOT_EMAIL }}
+        run: |
+          # Create config file locally (GitHub Actions masks secrets in logs)
+          cat > /tmp/cicd.env << EOF
+          DOMAIN=${SERVER_HOST}
+          APP_URL=${APP_URL}
+          CERTBOT_EMAIL=${CERTBOT_EMAIL}
+          EOF
+
+          # Ensure /etc/iranconnect exists on remote with proper permissions
+          ssh -i ~/.ssh/deploy_key \
+              -p "$SERVER_PORT" \
+              "$SERVER_USER@$SERVER_HOST" \
+              "mkdir -p /etc/iranconnect && chmod 700 /etc/iranconnect"
+
+          # Upload config
+          scp -i ~/.ssh/deploy_key \
+              -P "$SERVER_PORT" \
+              /tmp/cicd.env \
+              "$SERVER_USER@$SERVER_HOST:/etc/iranconnect/cicd.env"
+
+          ssh -i ~/.ssh/deploy_key \
+              -p "$SERVER_PORT" \
+              "$SERVER_USER@$SERVER_HOST" \
+              "chmod 644 /etc/iranconnect/cicd.env"
+
+      # ── Bootstrap & deploy ────────────────────────────────────────────────
+      # Runs bootstrap.sh as root on the server.
+      # First deploy: installs everything from scratch.
+      # Subsequent deploys: idempotent update.
+      - name: Bootstrap and deploy
+        env:
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+          SERVER_PORT: ${{ secrets.SERVER_PORT }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+        run: |
+          ssh -i ~/.ssh/deploy_key \
+              -p "$SERVER_PORT" \
+              -o ServerAliveInterval=60 \
+              -o ServerAliveCountMax=10 \
+              "$SERVER_USER@$SERVER_HOST" \
+              "chmod +x /tmp/bootstrap.sh /tmp/setup-wireguard-server.sh && bash /tmp/bootstrap.sh"
+
+      # ── Deployment summary ────────────────────────────────────────────────
+      - name: Deployment summary
+        env:
+          APP_URL: ${{ secrets.APP_URL }}
+        run: |
+          echo "### Deployment Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Resource | URL |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|-----|" >> $GITHUB_STEP_SUMMARY
+          echo "| API      | ${APP_URL} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Swagger  | ${APP_URL}/swagger |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY

@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(chmod +x \"/run/media/shahram/New Volume/Projects/IranVpn/IranConnection-CoreApplication/server/bootstrap.sh\")"
+    ]
+  }
+}

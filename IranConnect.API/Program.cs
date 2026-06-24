@@ -4,11 +4,20 @@ using IranConnect.API.Middleware;
 using IranConnect.Application;
 using IranConnect.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Trust X-Forwarded-For and X-Forwarded-Proto from nginx reverse proxy
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+});
 
 // Load server-specific overrides written by setup-wireguard-server.sh.
 // Contains WireGuard:ServerPublicKey and WireGuard:ServerEndpoint for this host.
@@ -93,12 +102,16 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+// Nginx reverse proxy: restore real client IP and HTTPS scheme
+app.UseForwardedHeaders();
+
+// Swagger available in all environments (API is behind WireGuard + SSL)
+app.UseSwagger();
+app.UseSwaggerUI(c =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "IranConnect API v1");
+    c.RoutePrefix = "swagger";
+});
 
 app.UseHttpsRedirection();
 
