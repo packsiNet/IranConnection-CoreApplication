@@ -97,16 +97,27 @@ jobs:
 
       # ── SSH key setup ─────────────────────────────────────────────────────
       # SERVER_SSH_KEY secret must be the SSH private key encoded as base64.
-      # To encode: base64 -w 0 ~/.ssh/id_rsa | xclip
+      # To encode: base64 -w 0 ~/.ssh/id_rsa
+      # The corresponding public key MUST be in root@server:~/.ssh/authorized_keys
       - name: Setup SSH key
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.SERVER_SSH_KEY }}" | base64 --decode > ~/.ssh/deploy_key
+          # printf avoids the trailing newline that echo adds (corrupts base64)
+          printf '%s' "${{ secrets.SERVER_SSH_KEY }}" | base64 --decode > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan \
-            -p "${{ secrets.SERVER_PORT }}" \
-            -H "${{ secrets.SERVER_HOST }}" \
-            >> ~/.ssh/known_hosts 2>/dev/null
+
+          # Validate the key decoded correctly
+          ssh-keygen -l -f ~/.ssh/deploy_key
+          echo "Public key that must exist in server authorized_keys:"
+          ssh-keygen -y -f ~/.ssh/deploy_key
+
+          # Add server host key (retry 3x in case server is slow)
+          for i in 1 2 3; do
+            ssh-keyscan -p "${{ secrets.SERVER_PORT }}" -T 15 \
+              "${{ secrets.SERVER_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null \
+              && break || sleep 5
+          done
+          echo "known_hosts entries: $(wc -l < ~/.ssh/known_hosts)"
 
       # ── Transfer application files ────────────────────────────────────────
       - name: Transfer application files to server
