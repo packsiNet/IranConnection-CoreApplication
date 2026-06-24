@@ -96,25 +96,31 @@ jobs:
           path: ./publish
 
       # ── SSH key setup ─────────────────────────────────────────────────────
-      # SERVER_SSH_KEY secret: paste the raw private key content as-is (multiline OK).
-      # On server:
-      #   ssh-keygen -t ed25519 -f ~/.ssh/deploy_key -N ""
-      #   cat ~/.ssh/deploy_key.pub >> ~/.ssh/authorized_keys
-      #   cat ~/.ssh/deploy_key          ← paste this entire output into the secret
+      # SERVER_SSH_KEY secret: paste raw private key content (cat ~/.ssh/deploy_key)
+      # env: block is the safe way to pass multiline secrets — avoids shell quoting issues
       - name: Setup SSH key
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SERVER_SSH_KEY }}
+          SSH_PORT: ${{ secrets.SERVER_PORT }}
+          SSH_HOST: ${{ secrets.SERVER_HOST }}
         run: |
           mkdir -p ~/.ssh
-          # Write raw key directly — GitHub preserves multiline secret values
-          printf '%s\n' "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/deploy_key
+
+          # env: var avoids all quoting/newline issues with ${{ }} inline expansion
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
 
-          # Validate key is valid
+          # Debug: verify file looks right
+          echo "Key file size: $(wc -c < ~/.ssh/deploy_key) bytes"
+          echo "Key first line: $(head -1 ~/.ssh/deploy_key)"
+
+          # Validate
           ssh-keygen -l -f ~/.ssh/deploy_key
 
           # Add server host key (retry 3x)
           for i in 1 2 3; do
-            ssh-keyscan -p "${{ secrets.SERVER_PORT }}" -T 15 \
-              "${{ secrets.SERVER_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null \
+            ssh-keyscan -p "$SSH_PORT" -T 15 \
+              "$SSH_HOST" >> ~/.ssh/known_hosts 2>/dev/null \
               && break || sleep 5
           done
           echo "known_hosts entries: $(wc -l < ~/.ssh/known_hosts)"
