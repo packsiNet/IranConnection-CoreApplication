@@ -96,22 +96,20 @@ jobs:
           path: ./publish
 
       # ── SSH key setup ─────────────────────────────────────────────────────
-      # SERVER_SSH_KEY secret must be the SSH private key encoded as base64.
-      # To encode: base64 -w 0 ~/.ssh/id_rsa
-      # The corresponding public key MUST be in root@server:~/.ssh/authorized_keys
+      # SERVER_SSH_KEY secret: private key encoded as base64 (no line breaks)
+      # On server: ssh-keygen -t ed25519 -f ~/.ssh/deploy_key -N ""
+      #            cat ~/.ssh/deploy_key | base64 -w 0   → paste this to secret
+      #            cat ~/.ssh/deploy_key.pub >> ~/.ssh/authorized_keys
       - name: Setup SSH key
         run: |
           mkdir -p ~/.ssh
-          # printf avoids the trailing newline that echo adds (corrupts base64)
           printf '%s' "${{ secrets.SERVER_SSH_KEY }}" | base64 --decode > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
 
-          # Validate the key decoded correctly
+          # Validate key decoded correctly
           ssh-keygen -l -f ~/.ssh/deploy_key
-          echo "Public key that must exist in server authorized_keys:"
-          ssh-keygen -y -f ~/.ssh/deploy_key
 
-          # Add server host key (retry 3x in case server is slow)
+          # Add server host key (retry 3x)
           for i in 1 2 3; do
             ssh-keyscan -p "${{ secrets.SERVER_PORT }}" -T 15 \
               "${{ secrets.SERVER_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null \
