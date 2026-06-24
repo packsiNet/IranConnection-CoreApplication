@@ -130,12 +130,13 @@ ok "Application files deployed."
 if [[ -f "$APP_DIR/efbundle" ]]; then
     log "Running EF database migrations ..."
     chmod +x "$APP_DIR/efbundle"
-    sudo -u "$APP_USER" "$APP_DIR/efbundle" \
+    # Run directly as root (efbundle connects to DB via connection string arg)
+    "$APP_DIR/efbundle" \
         --connection "${ConnectionStrings__DefaultConnection}" \
         || warn "EF bundle returned non-zero — migrations may already be applied."
     ok "Database migrations applied."
 else
-    warn "efbundle not found — skipping migrations (run manually if first deploy)."
+    warn "efbundle not found — skipping migrations."
 fi
 
 # ── 7. APP CONFIG ENV FILE ────────────────────────────────────────────────────
