@@ -159,7 +159,7 @@ After=network.target postgresql.service wg-quick@wg0.service
 Wants=wg-quick@wg0.service
 
 [Service]
-Type=notify
+Type=exec
 User=${APP_USER}
 WorkingDirectory=${APP_DIR}
 ExecStart=/usr/bin/dotnet ${APP_DIR}/IranConnect.API.dll
