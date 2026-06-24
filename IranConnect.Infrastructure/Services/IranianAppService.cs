@@ -7,13 +7,14 @@ public class IranianAppService : IIranianAppService
     // Free plan: only these packages are accessible without Premium
     private static readonly HashSet<string> FreePackages = new()
     {
-        "ir.bmi.bam.nativeweb", // Bank Melli
-        "com.samanpr.blujr"     // Blu Bank
+        "com.emofid.rnmofid", // Bank Melli
+        "com.samanpr.blu"     // Blu Bank
     };
 
     private static readonly List<(string Pkg, string En, string Fa)> Apps = new()
     {
-        ("com.samanpr.blujr", "Blu Bank", "بلوبانک"),
+        ("com.samanpr.blu", "Blu Bank", "بلوبانک"),
+        ("com.samanpr.blujr", "Blu Junior Bank", "بلو جونیوز"),
         ("ir.easytrader.orbis.m.twa", "EasyTrader", "ایزی‌تریدر"),
         ("com.emofid.rnmofid", "Mofid Mobile", "موبایل مفید"),
         ("market.nobitex", "Nobitex", "نوبیتکس"),
