@@ -117,6 +117,21 @@ jobs:
           done
           echo "known_hosts entries: $(wc -l < ~/.ssh/known_hosts)"
 
+      # ── Verify SSH connectivity (debug) ───────────────────────────────────
+      - name: Test SSH connection
+        env:
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+          SERVER_PORT: ${{ secrets.SERVER_PORT }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+        run: |
+          ssh -v \
+              -o StrictHostKeyChecking=no \
+              -o BatchMode=yes \
+              -i ~/.ssh/deploy_key \
+              -p "$SERVER_PORT" \
+              "$SERVER_USER@$SERVER_HOST" \
+              "whoami && echo SSH_OK" 2>&1
+
       # ── Transfer application files ────────────────────────────────────────
       - name: Transfer application files to server
         run: |
