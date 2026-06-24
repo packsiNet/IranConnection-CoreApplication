@@ -130,11 +130,15 @@ ok "Application files deployed."
 if [[ -f "$APP_DIR/efbundle" ]]; then
     log "Running EF database migrations ..."
     chmod +x "$APP_DIR/efbundle"
-    # Run directly as root (efbundle connects to DB via connection string arg)
-    "$APP_DIR/efbundle" \
-        --connection "${ConnectionStrings__DefaultConnection}" \
-        || warn "EF bundle returned non-zero — migrations may already be applied."
-    ok "Database migrations applied."
+    # Build connection string directly — do NOT use ${ConnectionStrings__DefaultConnection}
+    # sourced from secrets.env because bash treats semicolons as command separators
+    # and truncates the value. Systemd's env-file parser handles semicolons correctly.
+    EF_CONN="Host=127.0.0.1;Port=5432;Database=${PG_DB};Username=${PG_USER};Password=${DB_PASSWORD}"
+    if "$APP_DIR/efbundle" --connection "$EF_CONN"; then
+        ok "Database migrations applied."
+    else
+        warn "EF bundle returned non-zero — check output above."
+    fi
 else
     warn "efbundle not found — skipping migrations."
 fi
