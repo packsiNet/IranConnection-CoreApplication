@@ -53,6 +53,9 @@ jobs:
       - name: Install EF CLI tools
         run: dotnet tool install --global dotnet-ef
 
+      - name: Restore for linux-x64 (required for EF self-contained bundle)
+        run: dotnet restore --runtime linux-x64
+
       - name: Create EF migrations bundle (linux-x64)
         run: |
           export PATH="$PATH:$HOME/.dotnet/tools"
