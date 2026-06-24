@@ -96,17 +96,19 @@ jobs:
           path: ./publish
 
       # ── SSH key setup ─────────────────────────────────────────────────────
-      # SERVER_SSH_KEY secret: private key encoded as base64 (no line breaks)
-      # On server: ssh-keygen -t ed25519 -f ~/.ssh/deploy_key -N ""
-      #            cat ~/.ssh/deploy_key | base64 -w 0   → paste this to secret
-      #            cat ~/.ssh/deploy_key.pub >> ~/.ssh/authorized_keys
+      # SERVER_SSH_KEY secret: paste the raw private key content as-is (multiline OK).
+      # On server:
+      #   ssh-keygen -t ed25519 -f ~/.ssh/deploy_key -N ""
+      #   cat ~/.ssh/deploy_key.pub >> ~/.ssh/authorized_keys
+      #   cat ~/.ssh/deploy_key          ← paste this entire output into the secret
       - name: Setup SSH key
         run: |
           mkdir -p ~/.ssh
-          printf '%s' "${{ secrets.SERVER_SSH_KEY }}" | base64 --decode > ~/.ssh/deploy_key
+          # Write raw key directly — GitHub preserves multiline secret values
+          printf '%s\n' "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
 
-          # Validate key decoded correctly
+          # Validate key is valid
           ssh-keygen -l -f ~/.ssh/deploy_key
 
           # Add server host key (retry 3x)
