@@ -47,6 +47,7 @@ WG_DNS="${WG_DNS:-1.1.1.1}"
 WG_DIR="/etc/wireguard"
 SSH_PORT="${SSH_PORT:-22}"
 APP_USER="${APP_USER:-iranconnect}"
+PUBLIC_IP="${PUBLIC_IP:-95.38.163.117}"
 BACKEND_CFG_DIR="/etc/iranconnect"
 
 # Derive server tunnel IP (.1 of the subnet)
