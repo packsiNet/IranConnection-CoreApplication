@@ -7,8 +7,9 @@ public class IranianAppService : IIranianAppService
     // Free plan: only these packages are accessible without Premium
     private static readonly HashSet<string> FreePackages = new()
     {
-        "ir.easytrader.orbis.m.twa", // Bank Melli
-        "com.samanpr.blu"     // Blu Bank
+        "ir.easytrader.orbis.m.twa", // Easy Trader
+        "com.samanpr.blu",     // Blu Bank
+        "com.android.chrome" // Chrome
     };
 
     private static readonly List<(string Pkg, string En, string Fa)> Apps = new()
