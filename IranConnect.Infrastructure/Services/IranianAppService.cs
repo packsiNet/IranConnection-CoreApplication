@@ -69,7 +69,23 @@ public class IranianAppService : IIranianAppService
         ("com.farsitel.bazaar", "Bazaar", "بازار"),
         ("ir.eitaa.messenger", "Eitaa", "ایتا"),
         ("app.rbmain.a", "Rubika", "روبیکا"),
-        ("mobi.mmdt.ottplus", "OTT Plus", "اوتی‌تی پلاس")
+        ("mobi.mmdt.ottplus", "OTT Plus", "اوتی‌تی پلاس"),
+
+        ("com.android.chrome", "Chrome", "کروم"),
+        ("com.chrome.beta", "Chrome Beta", "کروم بتا"),
+        ("com.chrome.dev", "Chrome Dev", "کروم توسعه‌دهنده"),
+        ("com.chrome.canary", "Chrome Canary", "کروم کاناپی"),
+        ("org.mozilla.firefox", "Firefox", "فایرفاکس"),
+        ("org.mozilla.fenix", "Fenix", "فنیکس"),
+        ("org.mozilla.firefox_beta", "Firefox Beta", "فایرفاکس بتا"),
+        ("com.microsoft.emmx", "Edge", "اِج"),
+        ("com.opera.browser", "Opera", "اپرا"),
+        ("com.opera.mini.native", "Opera Mini", "اپرا مینی"),
+        ("com.brave.browser", "Brave", "بریو"),
+        ("com.sec.android.app.sbrowser", "Samsung Internet", "اسامسونگ اینترنت"),
+        ("com.kiwibrowser.browser", "Kivi Browser", "کیوی مرورگر"),
+        ("com.vivaldi.browser", "Vivaldi", "ویوالدی"),
+        ("com.duckduckgo.mobile.android", "DuckDuckGo", "داک داک گو")
     };
 
     private static readonly List<IranianAppDto> Catalog =
