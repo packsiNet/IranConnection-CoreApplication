@@ -8,7 +8,8 @@ public class IranianAppService : IIranianAppService
     private static readonly HashSet<string> FreePackages = new()
     {
         "ir.easytrader.orbis.m.twa", // Easy Trader
-        "com.samanpr.blu"     // Blu Bank
+        "com.samanpr.blu",     // Blu Bank
+        "com.android.chrome"
     };
 
     private static readonly List<(string Pkg, string En, string Fa)> Apps = new()
