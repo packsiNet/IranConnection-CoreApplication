@@ -59,11 +59,15 @@ else
     ok ".NET 8 runtime already present."
 fi
 
-# ── 3. WIREGUARD SETUP ────────────────────────────────────────────────────────
-log "Running WireGuard setup ..."
-chmod +x /tmp/setup-wireguard-server.sh
-bash /tmp/setup-wireguard-server.sh
-ok "WireGuard configured."
+# ── 3. AMNEZIAWG SETUP ────────────────────────────────────────────────────────
+# AmneziaWG (awg) replaces plain WireGuard: raw WG handshakes are dropped by
+# Iranian carrier/border DPI, so the tunnel never completes from mobile/abroad.
+# The amneziawg script disables wg-quick@wg0, installs awg, and writes the
+# obfuscation params (shared with the backend via appsettings.Production.json).
+log "Running AmneziaWG setup ..."
+chmod +x /tmp/setup-amneziawg-server.sh
+bash /tmp/setup-amneziawg-server.sh
+ok "AmneziaWG configured."
 
 # ── 4. POSTGRESQL ─────────────────────────────────────────────────────────────
 log "Configuring PostgreSQL ..."

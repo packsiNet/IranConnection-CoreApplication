@@ -84,7 +84,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # ── Checkout (needed for server/bootstrap.sh + server/setup-wireguard-server.sh) ──
+      # ── Checkout (needed for server/bootstrap.sh + server/setup-amneziawg-server.sh) ──
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -145,6 +145,7 @@ jobs:
         run: |
           scp -i ~/.ssh/deploy_key \
               -P "${{ secrets.SERVER_PORT }}" \
+              server/setup-amneziawg-server.sh \
               server/setup-wireguard-server.sh \
               server/bootstrap.sh \
               "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/tmp/"
@@ -199,7 +200,7 @@ jobs:
               -o ServerAliveInterval=60 \
               -o ServerAliveCountMax=10 \
               "$SERVER_USER@$SERVER_HOST" \
-              "chmod +x /tmp/bootstrap.sh /tmp/setup-wireguard-server.sh && bash /tmp/bootstrap.sh"
+              "chmod +x /tmp/bootstrap.sh /tmp/setup-amneziawg-server.sh /tmp/setup-wireguard-server.sh && bash /tmp/bootstrap.sh"
 
       # ── Deployment summary ────────────────────────────────────────────────
       - name: Deployment summary
