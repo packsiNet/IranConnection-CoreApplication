@@ -220,12 +220,9 @@ H2   = ${H2}
 H3   = ${H3}
 H4   = ${H4}
 
-PostUp   = iptables -A FORWARD -i %i -j ACCEPT; \\
-           iptables -A FORWARD -o %i -j ACCEPT; \\
-           iptables -t nat -A POSTROUTING -o ${WAN_IFACE} -j MASQUERADE
-PostDown = iptables -D FORWARD -i %i -j ACCEPT; \\
-           iptables -D FORWARD -o %i -j ACCEPT; \\
-           iptables -t nat -D POSTROUTING -o ${WAN_IFACE} -j MASQUERADE
+# Single-line: awg-quick's parser mangles backslash-continued lines.
+PostUp = iptables -A FORWARD -i %i -j ACCEPT; iptables -A FORWARD -o %i -j ACCEPT; iptables -t nat -A POSTROUTING -o ${WAN_IFACE} -j MASQUERADE
+PostDown = iptables -D FORWARD -i %i -j ACCEPT; iptables -D FORWARD -o %i -j ACCEPT; iptables -t nat -D POSTROUTING -o ${WAN_IFACE} -j MASQUERADE
 EOF
 chmod 600 "${WG_DIR}/${WG_IFACE}.conf"
 ok "wg0.conf written (Interface + obfuscation, no static peers)."
