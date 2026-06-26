@@ -30,6 +30,8 @@ public static class DependencyInjection
         services.AddScoped<IFileStorageService, LocalFileStorageService>();
         services.AddScoped<IWireGuardService, WireGuardService>();
         services.AddScoped<IVpnConfigService, VpnConfigService>();
+        // Startup resync runs first so wg0 matches the DB before stats polling.
+        services.AddHostedService<WireGuardSyncService>();
         services.AddHostedService<WireGuardStatsService>();
 
         return services;

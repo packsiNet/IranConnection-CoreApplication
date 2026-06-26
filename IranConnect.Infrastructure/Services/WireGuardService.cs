@@ -42,6 +42,52 @@ public class WireGuardService : IWireGuardService
             publicKey[..8] + "...", assignedIp);
     }
 
+    public async Task SyncPeersAsync(
+        IReadOnlyCollection<WireGuardPeerConfig> peers)
+    {
+        var iface = _configuration["WireGuard:Interface"] ?? "wg0";
+        var applied = 0;
+
+        foreach (var peer in peers)
+        {
+            try
+            {
+                var ip = peer.AssignedIp.Split('/')[0];
+                // Idempotent: overwrites existing peer's allowed-ips if present.
+                await RunCommandAsync(
+                    $"sudo wg set {iface} peer {peer.PublicKey} " +
+                    $"allowed-ips {ip}/32");
+                applied++;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex,
+                    "Failed to sync WireGuard peer {PublicKey} -> {Ip}",
+                    peer.PublicKey.Length >= 8
+                        ? peer.PublicKey[..8] + "..." : peer.PublicKey,
+                    peer.AssignedIp);
+            }
+        }
+
+        // Persist runtime peers to wg0.conf once after the batch.
+        if (applied > 0)
+        {
+            try
+            {
+                await RunCommandAsync($"sudo wg-quick save {iface}");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex,
+                    "wg-quick save failed after peer sync on {Iface}", iface);
+            }
+        }
+
+        _logger.LogInformation(
+            "WireGuard peer sync complete: {Applied}/{Total} peers applied " +
+            "to {Iface}", applied, peers.Count, iface);
+    }
+
     public async Task RemovePeerAsync(string publicKey)
     {
         var iface = _configuration["WireGuard:Interface"] ?? "wg0";
@@ -107,8 +153,13 @@ public class WireGuardService : IWireGuardService
         await process.WaitForExitAsync();
 
         if (process.ExitCode != 0 && !string.IsNullOrEmpty(error))
+        {
+            _logger.LogError(
+                "WireGuard command failed (exit {ExitCode}): {Command} | {Error}",
+                process.ExitCode, command, error.Trim());
             throw new InvalidOperationException(
                 $"WireGuard command failed: {error}");
+        }
 
         return output;
     }
