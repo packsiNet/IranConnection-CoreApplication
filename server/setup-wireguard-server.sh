@@ -28,7 +28,7 @@
 #   sudo bash setup-wireguard-server.sh
 #
 # Environment overrides (all optional):
-#   WG_PORT      WireGuard listen port   (default: 51820)
+#   WG_PORT      WireGuard listen port   (default: 443)
 #   WG_NET       Tunnel subnet           (default: 10.0.0.0/24)
 #   WG_DNS       DNS pushed to clients   (default: 1.1.1.1)
 #   PUBLIC_IP    Force public IP (skip detection)
@@ -40,7 +40,7 @@ set -Eeuo pipefail
 
 # ----------------------------- configuration ---------------------------------
 WG_IFACE="wg0"
-WG_PORT="${WG_PORT:-51820}"
+WG_PORT="${WG_PORT:-443}"
 # Subnet MUST match VpnConfigService.cs IP allocation (10.0.0.2 … 10.0.1.254)
 WG_NET="${WG_NET:-10.0.0.0/24}"
 WG_DNS="${WG_DNS:-1.1.1.1}"
