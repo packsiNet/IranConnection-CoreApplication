@@ -1,3 +1,4 @@
+using IranConnect.Application.Common.Interfaces;
 using IranConnect.Application.Common.Models;
 using MediatR;
 
@@ -12,4 +13,6 @@ public record VpnConfigResponse(
     string ServerPublicKey,
     string ServerEndpoint,
     string Dns,
-    string AllowedIPs);
+    string AllowedIPs,
+    // AmneziaWG obfuscation params the client must apply to its [Interface].
+    AmneziaObfuscation Obfuscation);

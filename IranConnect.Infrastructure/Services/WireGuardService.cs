@@ -18,13 +18,19 @@ public class WireGuardService : IWireGuardService
         _configuration = configuration;
     }
 
+    // AmneziaWG ships `awg` / `awg-quick` (drop-in for wg / wg-quick) with DPI
+    // evasion. Configurable so plain WireGuard ("wg") can still be used in dev.
+    private string Wg => _configuration["WireGuard:Binary"] ?? "awg";
+    private string WgQuick =>
+        _configuration["WireGuard:QuickBinary"] ?? "awg-quick";
+
     public async Task<(string publicKey, string privateKey)>
         GenerateKeyPairAsync()
     {
-        var privateKey = (await RunCommandAsync("sudo wg genkey")).Trim();
+        var privateKey = (await RunCommandAsync($"sudo {Wg} genkey")).Trim();
         // WireGuard keys are base64 — safe inside single-quotes
         var publicKey = (await RunCommandAsync(
-            $"echo '{privateKey}' | sudo wg pubkey")).Trim();
+            $"echo '{privateKey}' | sudo {Wg} pubkey")).Trim();
         return (publicKey, privateKey);
     }
 
@@ -34,8 +40,8 @@ public class WireGuardService : IWireGuardService
         var iface = _configuration["WireGuard:Interface"] ?? "wg0";
 
         await RunCommandAsync(
-            $"sudo wg set {iface} peer {publicKey} allowed-ips {ip}/32");
-        await RunCommandAsync($"sudo wg-quick save {iface}");
+            $"sudo {Wg} set {iface} peer {publicKey} allowed-ips {ip}/32");
+        await RunCommandAsync($"sudo {WgQuick} save {iface}");
 
         _logger.LogInformation(
             "WireGuard peer added: {PublicKey} -> {Ip}",
@@ -55,7 +61,7 @@ public class WireGuardService : IWireGuardService
                 var ip = peer.AssignedIp.Split('/')[0];
                 // Idempotent: overwrites existing peer's allowed-ips if present.
                 await RunCommandAsync(
-                    $"sudo wg set {iface} peer {peer.PublicKey} " +
+                    $"sudo {Wg} set {iface} peer {peer.PublicKey} " +
                     $"allowed-ips {ip}/32");
                 applied++;
             }
@@ -74,7 +80,7 @@ public class WireGuardService : IWireGuardService
         {
             try
             {
-                await RunCommandAsync($"sudo wg-quick save {iface}");
+                await RunCommandAsync($"sudo {WgQuick} save {iface}");
             }
             catch (Exception ex)
             {
@@ -92,8 +98,8 @@ public class WireGuardService : IWireGuardService
     {
         var iface = _configuration["WireGuard:Interface"] ?? "wg0";
 
-        await RunCommandAsync($"sudo wg set {iface} peer {publicKey} remove");
-        await RunCommandAsync($"sudo wg-quick save {iface}");
+        await RunCommandAsync($"sudo {Wg} set {iface} peer {publicKey} remove");
+        await RunCommandAsync($"sudo {WgQuick} save {iface}");
 
         _logger.LogInformation(
             "WireGuard peer removed: {PublicKey}",
@@ -103,7 +109,7 @@ public class WireGuardService : IWireGuardService
     public async Task<List<WireGuardPeerStats>> GetAllPeerStatsAsync()
     {
         var iface = _configuration["WireGuard:Interface"] ?? "wg0";
-        var output = await RunCommandAsync($"sudo wg show {iface} dump");
+        var output = await RunCommandAsync($"sudo {Wg} show {iface} dump");
         var stats = new List<WireGuardPeerStats>();
 
         foreach (var line in output.Split('\n').Skip(1))

@@ -98,6 +98,31 @@ public class VpnConfigService : IVpnConfigService
             _configuration["WireGuard:ServerEndpoint"]!,
             _configuration["WireGuard:Dns"] ?? "1.1.1.1",
             // Full tunnel — per-app split tunneling enforced by Android VpnService
-            _configuration["WireGuard:ClientAllowedIPs"] ?? "0.0.0.0/0, ::/0");
+            _configuration["WireGuard:ClientAllowedIPs"] ?? "0.0.0.0/0, ::/0",
+            BuildObfuscation());
     }
+
+    // AmneziaWG params served to every client. Defaults match the values the
+    // server setup script writes; production overrides come from appsettings.
+    private AmneziaObfuscation BuildObfuscation()
+    {
+        return new AmneziaObfuscation(
+            ReadInt("Jc", 8),
+            ReadInt("Jmin", 24),
+            ReadInt("Jmax", 80),
+            ReadInt("S1", 24),
+            ReadInt("S2", 48),
+            ReadLong("H1", 1148364632),
+            ReadLong("H2", 776863562),
+            ReadLong("H3", 1818526299),
+            ReadLong("H4", 1971479911));
+    }
+
+    private int ReadInt(string key, int fallback)
+        => int.TryParse(_configuration[$"WireGuard:Obfuscation:{key}"],
+            out var v) ? v : fallback;
+
+    private long ReadLong(string key, long fallback)
+        => long.TryParse(_configuration[$"WireGuard:Obfuscation:{key}"],
+            out var v) ? v : fallback;
 }
