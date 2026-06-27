@@ -1,6 +1,11 @@
 using IranConnect.API.Models.Requests;
 using IranConnect.Application.Common.Interfaces;
 using IranConnect.Application.Features.Admin.Commands.ActivateUser;
+using IranConnect.Application.Features.Admin.Commands.CreateApp;
+using IranConnect.Application.Features.Admin.Commands.DeleteApp;
+using IranConnect.Application.Features.Admin.Commands.SetAppTier;
+using IranConnect.Application.Features.Admin.Commands.UpdateApp;
+using IranConnect.Application.Features.Admin.Queries.GetApps;
 using IranConnect.Application.Features.Admin.Commands.DeactivateUser;
 using IranConnect.Application.Features.Admin.Commands.DeletePeer;
 using IranConnect.Application.Features.Admin.Commands.DeleteUser;
@@ -338,6 +343,83 @@ public class AdminController : BaseController
         var result = await Mediator.Send(
             new GetOnlineStatsQuery(),
             cancellationToken);
+        return HandleResult(result);
+    }
+
+    // ── Iranian app catalog (allowed apps) ──────────────────────────────────
+
+    /// <summary>List catalog apps (incl. inactive). Filters optional.</summary>
+    [HttpGet("apps")]
+    [ProducesResponseType(typeof(List<AdminAppResponse>), 200)]
+    public async Task<IActionResult> GetApps(
+        [FromQuery] string? search = null,
+        [FromQuery] bool? isFree = null,
+        [FromQuery] bool? isActive = null,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await Mediator.Send(
+            new GetAppsQuery(search, isFree, isActive), cancellationToken);
+        return HandleResult(result);
+    }
+
+    /// <summary>Add a new app to the catalog</summary>
+    [HttpPost("apps")]
+    [ProducesResponseType(typeof(AdminAppResponse), 201)]
+    [ProducesResponseType(400)]
+    [ProducesResponseType(409)]
+    public async Task<IActionResult> CreateApp(
+        [FromBody] CreateAppRequest request,
+        CancellationToken cancellationToken)
+    {
+        var result = await Mediator.Send(
+            new CreateAppCommand(
+                request.PackageName, request.NameEn,
+                request.NameFa, request.IsFree),
+            cancellationToken);
+        return HandleResult(result);
+    }
+
+    /// <summary>Edit an app (package name, EN/FA names)</summary>
+    [HttpPut("apps/{id}")]
+    [ProducesResponseType(typeof(AdminAppResponse), 200)]
+    [ProducesResponseType(404)]
+    [ProducesResponseType(409)]
+    public async Task<IActionResult> UpdateApp(
+        Guid id,
+        [FromBody] UpdateAppRequest request,
+        CancellationToken cancellationToken)
+    {
+        var result = await Mediator.Send(
+            new UpdateAppCommand(
+                id, request.PackageName, request.NameEn, request.NameFa),
+            cancellationToken);
+        return HandleResult(result);
+    }
+
+    /// <summary>Delete an app from the catalog</summary>
+    [HttpDelete("apps/{id}")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(404)]
+    public async Task<IActionResult> DeleteApp(
+        Guid id,
+        CancellationToken cancellationToken)
+    {
+        var result = await Mediator.Send(
+            new DeleteAppCommand(id), cancellationToken);
+        return HandleResult(result);
+    }
+
+    /// <summary>Change app tier (Free vs Premium)</summary>
+    [HttpPut("apps/{id}/tier")]
+    [ProducesResponseType(typeof(AdminAppResponse), 200)]
+    [ProducesResponseType(404)]
+    public async Task<IActionResult> SetAppTier(
+        Guid id,
+        [FromBody] SetAppTierRequest request,
+        CancellationToken cancellationToken)
+    {
+        var result = await Mediator.Send(
+            new SetAppTierCommand(id, request.IsFree), cancellationToken);
         return HandleResult(result);
     }
 }

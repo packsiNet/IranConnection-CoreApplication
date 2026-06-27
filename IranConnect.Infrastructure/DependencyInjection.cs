@@ -26,10 +26,11 @@ public static class DependencyInjection
         services.AddScoped<IJwtService, JwtService>();
         services.AddScoped<IPasswordHasher, PasswordHasher>();
         services.AddScoped<IEmailService, EmailService>();
-        services.AddScoped<IIranianAppService, IranianAppService>();
         services.AddScoped<IFileStorageService, LocalFileStorageService>();
         services.AddScoped<IWireGuardService, WireGuardService>();
         services.AddScoped<IVpnConfigService, VpnConfigService>();
+        // Seeds the Iranian app catalog into the DB on first run (if empty).
+        services.AddHostedService<IranianAppSeeder>();
         // Startup resync runs first so wg0 matches the DB before stats polling.
         services.AddHostedService<WireGuardSyncService>();
         services.AddHostedService<WireGuardStatsService>();

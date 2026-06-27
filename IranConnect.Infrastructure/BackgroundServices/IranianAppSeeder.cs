@@ -1,18 +1,38 @@
 using IranConnect.Application.Common.Interfaces;
+using IranConnect.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
-namespace IranConnect.Infrastructure.Services;
+namespace IranConnect.Infrastructure.BackgroundServices;
 
-public class IranianAppService : IIranianAppService
+// One-shot seeder. Populates the IranianApps table from the original built-in
+// list the first time the table is empty. After that, the catalog is managed
+// entirely by admins via the CRUD endpoints — the seeder never overwrites
+// existing rows.
+public class IranianAppSeeder : IHostedService
 {
-    // Free plan: only these packages are accessible without Premium
+    private readonly IServiceScopeFactory _scopeFactory;
+    private readonly ILogger<IranianAppSeeder> _logger;
+
+    public IranianAppSeeder(
+        IServiceScopeFactory scopeFactory,
+        ILogger<IranianAppSeeder> logger)
+    {
+        _scopeFactory = scopeFactory;
+        _logger = logger;
+    }
+
+    // Free plan: only these packages are usable without Premium.
     private static readonly HashSet<string> FreePackages = new()
     {
-        "ir.easytrader.orbis.m.twa", // Easy Trader
-        "com.samanpr.blu",     // Blu Bank
+        "ir.easytrader.orbis.m.twa",
+        "com.samanpr.blu",
         "ir.mci.ecareapp"
     };
 
-    private static readonly List<(string Pkg, string En, string Fa)> Apps = new()
+    private static readonly (string Pkg, string En, string Fa)[] Apps =
     {
         ("com.samanpr.blu", "Blu Bank", "بلوبانک"),
         ("com.samanpr.blujr", "Blu Junior Bank", "بلو جونیوز"),
@@ -56,7 +76,8 @@ public class IranianAppService : IIranianAppService
         ("ir.stts.bjt", "Bajet", "باجت"),
         ("com.tosan.dara.sina", "Bank Sina", "بانک سینا"),
         ("mob.banking.android.pasargad", "Bank Pasargad", "بانک پاسارگاد"),
-        ("com.tosan.dara.mehriran", "Bank Mehr Iran", "بانک مهر ایران"),
+        ("com.tosan.dara.mehriran", "Mehrino", "مهرینو"),
+        ("com.tosan.dara.saman", "Bank Saman", "بانک سامان"),
         ("ir.tes.sarmayeh", "Bank Sarmayeh", "بانک سرمایه"),
         ("ir.hafhashtad.android780", "Haf Hashtad", "هفت‌هشتاد"),
         ("com.sheypoor.mobile", "Sheypoor", "شیپور"),
@@ -71,28 +92,39 @@ public class IranianAppService : IIranianAppService
         ("ir.eitaa.messenger", "Eitaa", "ایتا"),
         ("app.rbmain.a", "Rubika", "روبیکا"),
         ("mobi.mmdt.ottplus", "OTT Plus", "اوتی‌تی پلاس")
-
-        // ("com.android.chrome", "Chrome", "کروم"),
-        // ("com.chrome.beta", "Chrome Beta", "کروم بتا"),
-        // ("com.chrome.dev", "Chrome Dev", "کروم توسعه‌دهنده"),
-        // ("com.chrome.canary", "Chrome Canary", "کروم کاناپی"),
-        // ("org.mozilla.firefox", "Firefox", "فایرفاکس"),
-        // ("org.mozilla.fenix", "Fenix", "فنیکس"),
-        // ("org.mozilla.firefox_beta", "Firefox Beta", "فایرفاکس بتا"),
-        // ("com.microsoft.emmx", "Edge", "اِج"),
-        // ("com.opera.browser", "Opera", "اپرا"),
-        // ("com.opera.mini.native", "Opera Mini", "اپرا مینی"),
-        // ("com.brave.browser", "Brave", "بریو"),
-        // ("com.sec.android.app.sbrowser", "Samsung Internet", "اسامسونگ اینترنت"),
-        // ("com.kiwibrowser.browser", "Kivi Browser", "کیوی مرورگر"),
-        // ("com.vivaldi.browser", "Vivaldi", "ویوالدی"),
-        // ("com.duckduckgo.mobile.android", "DuckDuckGo", "داک داک گو")
     };
 
-    private static readonly List<IranianAppDto> Catalog =
-        Apps.Select(a => new IranianAppDto(
-                a.Pkg, a.En, a.Fa, FreePackages.Contains(a.Pkg)))
-            .ToList();
+    public async Task StartAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            using var scope = _scopeFactory.CreateScope();
+            var context = scope.ServiceProvider
+                .GetRequiredService<IApplicationDbContext>();
 
-    public List<IranianAppDto> GetAppCatalog() => Catalog;
+            if (await context.IranianApps.AnyAsync(cancellationToken))
+            {
+                _logger.LogInformation(
+                    "IranianApps already seeded; skipping.");
+                return;
+            }
+
+            foreach (var (pkg, en, fa) in Apps)
+                context.IranianApps.Add(
+                    IranianApp.Create(pkg, en, fa, FreePackages.Contains(pkg)));
+
+            var count = await context.SaveChangesAsync(cancellationToken);
+            _logger.LogInformation(
+                "Seeded {Count} Iranian apps into catalog.", count);
+        }
+        catch (Exception ex)
+        {
+            // Warn, do not crash startup (e.g. migration not applied yet).
+            _logger.LogWarning(ex,
+                "IranianApp seeding failed; catalog may be empty.");
+        }
+    }
+
+    public Task StopAsync(CancellationToken cancellationToken)
+        => Task.CompletedTask;
 }

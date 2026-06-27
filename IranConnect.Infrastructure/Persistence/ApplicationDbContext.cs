@@ -20,6 +20,7 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<Payment> Payments => Set<Payment>();
     public DbSet<PaymentReceipt> PaymentReceipts => Set<PaymentReceipt>();
     public DbSet<WireGuardPeer> WireGuardPeers => Set<WireGuardPeer>();
+    public DbSet<IranianApp> IranianApps => Set<IranianApp>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

@@ -279,6 +279,59 @@ Response 200 — `OnlineStatsResponse`:
 
 ---
 
+# 5) کاتالوگ اپ‌های مجاز (Iranian Apps)
+
+اپ‌هایی که کلاینت از تونل عبور می‌ده (split tunneling). قبلاً لیست ثابت در RAM بود؛ حالا جدول DB با CRUD ادمین. هر اپ: `packageName` (applicationId)، `nameEn`، `nameFa` (Title فارسی)، `isFree` (Free/Premium)، `isActive`.
+
+> کاتالوگ عمومی برای کلاینت: `GET /api/subscription/apps` (فقط اپ‌های `isActive`، فیلدهای packageName/nameEn/nameFa/isFree). endpointهای زیر مدیریتیه و فقط ادمین.
+
+مدل خروجی مشترک — `AdminAppResponse`:
+```json
+{
+  "id": "guid",
+  "packageName": "com.samanpr.blu",
+  "nameEn": "Blu Bank",
+  "nameFa": "بلوبانک",
+  "isFree": true,
+  "isActive": true,
+  "createdAt": "2026-06-27T00:00:00Z",
+  "updatedAt": null
+}
+```
+
+## GET `/api/admin/apps` — لیست کاتالوگ (شامل غیرفعال‌ها)
+Query (همه اختیاری): `search` (در nameEn/nameFa/packageName) · `isFree` (true/false) · `isActive` (true/false)
+
+Response 200 — `List<AdminAppResponse>` (همون مدل بالا، آرایه).
+
+## POST `/api/admin/apps` — افزودن اپ
+Body — `CreateAppRequest`:
+```json
+{ "packageName": "com.example.app", "nameEn": "Example", "nameFa": "نمونه", "isFree": false }
+```
+Response: **201** + `AdminAppResponse` · 400 (فیلد خالی) · 409 (packageName تکراری).
+
+## PUT `/api/admin/apps/{id}` — ویرایش اپ
+Path: `id` (Guid). Body — `UpdateAppRequest`:
+```json
+{ "packageName": "com.example.app", "nameEn": "Example New", "nameFa": "نمونه جدید" }
+```
+> `isFree` اینجا تغییر نمی‌کنه — برای tier از endpoint بعدی استفاده کن.
+
+Response: 200 + `AdminAppResponse` · 404 · 409 (packageName برای اپ دیگه).
+
+## DELETE `/api/admin/apps/{id}` — حذف اپ
+Response: 200 `{ "data": "اپ '...' حذف شد" }` (متن موفقیت) · 404.
+
+## PUT `/api/admin/apps/{id}/tier` — تغییر Free/Premium
+Body — `SetAppTierRequest`:
+```json
+{ "isFree": true }
+```
+`true` = Free، `false` = Premium. Response: 200 + `AdminAppResponse` · 404.
+
+---
+
 # جدول خلاصه
 
 | # | Method | Path | توضیح |
@@ -304,5 +357,11 @@ Response 200 — `OnlineStatsResponse`:
 | 19 | GET | `/admin/vpn/bandwidth` | گزارش مصرف همه |
 | 20 | GET | `/admin/vpn/bandwidth/{userId}` | مصرف کاربر |
 | 21 | GET | `/admin/vpn/online` | آنلاین همزمان |
+| 22 | GET | `/admin/apps` | لیست کاتالوگ اپ (شامل غیرفعال) |
+| 23 | POST | `/admin/apps` | افزودن اپ |
+| 24 | PUT | `/admin/apps/{id}` | ویرایش اپ (نام/package) |
+| 25 | DELETE | `/admin/apps/{id}` | حذف اپ |
+| 26 | PUT | `/admin/apps/{id}/tier` | تغییر Free/Premium |
 
 > همه با `Authorization: Bearer <token>` (role=Admin). تاریخ‌ها ISO-8601 UTC. مقادیر `*Human` رشته‌ی آماده‌ی نمایش، مقادیر خام بایت برای محاسبه.
+> کاتالوگ عمومی کلاینت (بدون ادمین): `GET /api/subscription/apps`.
