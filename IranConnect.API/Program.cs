@@ -33,6 +33,10 @@ builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
+        // Keep JWT claim types verbatim. With the default (true), inbound
+        // claims are remapped (e.g. "role" -> ClaimTypes.Role URI), which
+        // breaks the AdminOnly policy's RequireClaim("role", "Admin") -> 403.
+        options.MapInboundClaims = false;
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuerSigningKey = true,
