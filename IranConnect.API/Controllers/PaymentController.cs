@@ -36,6 +36,7 @@ public class PaymentController : BaseController
                 ms.ToArray(),
                 request.ReceiptFile.FileName,
                 request.ReceiptFile.ContentType,
+                request.ReceiptType,
                 request.DurationDays),
             cancellationToken);
 

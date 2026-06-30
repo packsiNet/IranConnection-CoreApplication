@@ -47,11 +47,13 @@ public class RefreshTokenCommandHandler
         await _context.SaveChangesAsync(cancellationToken);
 
         var plan = refreshToken.User.Subscription?.Plan.ToString() ?? "Free";
+        var showAds = refreshToken.User.Subscription?.ShowAds ?? true;
         var accessToken = _jwtService.GenerateToken(
             refreshToken.User.Id.ToString(),
             refreshToken.User.Email,
             plan,
-            refreshToken.User.IsAdmin);
+            refreshToken.User.IsAdmin,
+            showAds);
 
         return Result<LoginResponse>.Success(new LoginResponse(
             accessToken,
@@ -60,6 +62,7 @@ public class RefreshTokenCommandHandler
             refreshToken.User.Email,
             refreshToken.User.FullName,
             plan,
+            showAds,
             refreshToken.User.IsEmailVerified));
     }
 }

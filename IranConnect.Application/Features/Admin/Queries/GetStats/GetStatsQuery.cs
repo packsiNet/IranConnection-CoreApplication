@@ -9,6 +9,7 @@ public record StatsResponse(
     int TotalUsers,
     int ActiveUsers,
     int FreeUsers,
+    int FreeNoAdsUsers,
     int PremiumUsers,
     int ExpiredSubscriptions,
     int NewUsersToday,

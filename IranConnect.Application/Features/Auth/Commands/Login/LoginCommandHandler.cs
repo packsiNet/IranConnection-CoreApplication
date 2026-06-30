@@ -57,8 +57,9 @@ public class LoginCommandHandler
         await _context.SaveChangesAsync(cancellationToken);
 
         var plan = user.Subscription?.Plan.ToString() ?? "Free";
+        var showAds = user.Subscription?.ShowAds ?? true;
         var accessToken = _jwtService.GenerateToken(
-            user.Id.ToString(), user.Email, plan, user.IsAdmin);
+            user.Id.ToString(), user.Email, plan, user.IsAdmin, showAds);
 
         return Result<LoginResponse>.Success(new LoginResponse(
             accessToken,
@@ -67,6 +68,7 @@ public class LoginCommandHandler
             user.Email,
             user.FullName,
             plan,
+            showAds,
             user.IsEmailVerified));
     }
 }

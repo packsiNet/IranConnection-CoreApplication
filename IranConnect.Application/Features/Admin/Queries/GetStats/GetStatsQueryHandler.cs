@@ -29,7 +29,13 @@ public class GetStatsQueryHandler
             .CountAsync(u => u.IsActive, cancellationToken);
 
         var freeUsers = await _context.Subscriptions
-            .CountAsync(s => s.Plan == SubscriptionPlan.Free,
+            .CountAsync(
+                s => s.Plan == SubscriptionPlan.Free && s.ShowAds,
+                cancellationToken);
+
+        var freeNoAdsUsers = await _context.Subscriptions
+            .CountAsync(
+                s => s.Plan == SubscriptionPlan.Free && !s.ShowAds,
                 cancellationToken);
 
         var premiumUsers = await _context.Subscriptions
@@ -58,6 +64,7 @@ public class GetStatsQueryHandler
             totalUsers,
             activeUsers,
             freeUsers,
+            freeNoAdsUsers,
             premiumUsers,
             expiredSubscriptions,
             newUsersToday,

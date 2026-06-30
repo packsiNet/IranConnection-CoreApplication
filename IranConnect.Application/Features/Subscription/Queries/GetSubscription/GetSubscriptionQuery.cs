@@ -12,4 +12,11 @@ public record SubscriptionResponse(
     DateTime StartDate,
     DateTime ExpireDate,
     int DaysRemaining,
-    bool IsActive);
+    bool IsActive,
+    bool ShowAds,
+    List<AllowedAppResponse> AllowedApps);
+
+public record AllowedAppResponse(
+    string PackageName,
+    string NameEn,
+    string NameFa);

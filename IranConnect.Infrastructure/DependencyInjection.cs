@@ -34,6 +34,7 @@ public static class DependencyInjection
         // Startup resync runs first so wg0 matches the DB before stats polling.
         services.AddHostedService<WireGuardSyncService>();
         services.AddHostedService<WireGuardStatsService>();
+        services.AddHttpClient<ICountryLookupService, HttpCountryLookupService>();
 
         return services;
     }

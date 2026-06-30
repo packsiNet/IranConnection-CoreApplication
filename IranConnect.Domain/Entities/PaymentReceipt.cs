@@ -11,6 +11,7 @@ public class PaymentReceipt : BaseEntity
     public string StoredFileName { get; private set; } = default!;
     public string OriginalFileName { get; private set; } = default!;
     public PaymentReceiptStatus Status { get; private set; }
+    public PaymentReceiptType ReceiptType { get; private set; }
     public int RequestedDurationDays { get; private set; }
     public string? AdminNote { get; private set; }
     public Guid? ReviewedByAdminId { get; private set; }
@@ -26,7 +27,8 @@ public class PaymentReceipt : BaseEntity
         string lastFourDigits,
         string storedFileName,
         string originalFileName,
-        int requestedDurationDays)
+        int requestedDurationDays,
+        PaymentReceiptType receiptType = PaymentReceiptType.PremiumUpgrade)
     {
         return new PaymentReceipt
         {
@@ -36,6 +38,7 @@ public class PaymentReceipt : BaseEntity
             StoredFileName = storedFileName,
             OriginalFileName = originalFileName,
             RequestedDurationDays = requestedDurationDays,
+            ReceiptType = receiptType,
             Status = PaymentReceiptStatus.Pending
         };
     }

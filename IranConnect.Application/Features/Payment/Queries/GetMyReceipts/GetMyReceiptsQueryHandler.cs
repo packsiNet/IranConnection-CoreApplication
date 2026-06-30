@@ -25,6 +25,7 @@ public class GetMyReceiptsQueryHandler
                 r.PayerFullName,
                 r.LastFourDigits,
                 r.Status.ToString(),
+                r.ReceiptType.ToString(),
                 r.RequestedDurationDays,
                 r.CreatedAt,
                 r.AdminNote,

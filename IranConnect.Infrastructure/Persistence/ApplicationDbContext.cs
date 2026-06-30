@@ -21,6 +21,8 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<PaymentReceipt> PaymentReceipts => Set<PaymentReceipt>();
     public DbSet<WireGuardPeer> WireGuardPeers => Set<WireGuardPeer>();
     public DbSet<IranianApp> IranianApps => Set<IranianApp>();
+    public DbSet<StatEvent> StatEvents => Set<StatEvent>();
+    public DbSet<Review> Reviews => Set<Review>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

@@ -51,11 +51,16 @@ public class SubmitPaymentReceiptCommandHandler
             request.LastFourDigits,
             storedFileName,
             request.FileName,
-            request.DurationDays);
+            request.DurationDays,
+            request.ReceiptType);
 
         _context.PaymentReceipts.Add(receipt);
         await _context.SaveChangesAsync(cancellationToken);
 
-        return Result<string>.Success("رسید پرداخت با موفقیت ثبت شد. پس از بررسی، اشتراک شما تمدید خواهد شد", 201);
+        var message = request.ReceiptType == Domain.Enums.PaymentReceiptType.AdsRemoval
+            ? "رسید پرداخت با موفقیت ثبت شد. پس از بررسی، تبلیغات از حساب شما حذف خواهد شد"
+            : "رسید پرداخت با موفقیت ثبت شد. پس از بررسی، اشتراک شما تمدید خواهد شد";
+
+        return Result<string>.Success(message, 201);
     }
 }

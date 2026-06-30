@@ -14,7 +14,7 @@ public class JwtService : IJwtService
     public JwtService(IConfiguration configuration)
         => _configuration = configuration;
 
-    public string GenerateToken(string userId, string email, string plan, bool isAdmin)
+    public string GenerateToken(string userId, string email, string plan, bool isAdmin, bool showAds)
     {
         var key = new SymmetricSecurityKey(
             Encoding.UTF8.GetBytes(_configuration["Jwt:Secret"]!));
@@ -24,6 +24,7 @@ public class JwtService : IJwtService
             new(ClaimTypes.NameIdentifier, userId),
             new(ClaimTypes.Email, email),
             new("plan", plan),
+            new("showAds", showAds.ToString().ToLower()),
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
         if (isAdmin)

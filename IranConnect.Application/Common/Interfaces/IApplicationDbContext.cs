@@ -12,6 +12,8 @@ public interface IApplicationDbContext
     DbSet<PaymentReceipt> PaymentReceipts { get; }
     DbSet<WireGuardPeer> WireGuardPeers { get; }
     DbSet<IranianApp> IranianApps { get; }
+    DbSet<StatEvent> StatEvents { get; }
+    DbSet<Review> Reviews { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
 }

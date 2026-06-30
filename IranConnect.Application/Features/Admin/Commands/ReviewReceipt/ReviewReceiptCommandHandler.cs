@@ -42,21 +42,41 @@ public class ReviewReceiptCommandHandler
         if (user is null)
             return Result<string>.Failure("کاربر یافت نشد", 404);
 
-        if (user.Subscription is null)
+        string successMessage;
+
+        if (receipt.ReceiptType == PaymentReceiptType.AdsRemoval)
         {
-            var subscription = DomainSubscription.CreatePremium(user.Id, receipt.RequestedDurationDays);
-            _context.Subscriptions.Add(subscription);
-            user.AttachSubscription(subscription);
+            if (user.Subscription is null)
+            {
+                var subscription = DomainSubscription.CreateFree(user.Id);
+                subscription.RemoveAds();
+                _context.Subscriptions.Add(subscription);
+                user.AttachSubscription(subscription);
+            }
+            else
+            {
+                user.Subscription.RemoveAds();
+            }
+            successMessage = "رسید تأیید شد و تبلیغات از حساب کاربر حذف گردید";
         }
         else
         {
-            user.Subscription.Upgrade(receipt.RequestedDurationDays);
+            if (user.Subscription is null)
+            {
+                var subscription = DomainSubscription.CreatePremium(user.Id, receipt.RequestedDurationDays);
+                _context.Subscriptions.Add(subscription);
+                user.AttachSubscription(subscription);
+            }
+            else
+            {
+                user.Subscription.Upgrade(receipt.RequestedDurationDays);
+            }
+            successMessage = $"رسید تأیید شد و اشتراک کاربر برای {receipt.RequestedDurationDays} روز تمدید گردید";
         }
 
         receipt.Approve(request.AdminId);
         await _context.SaveChangesAsync(cancellationToken);
 
-        return Result<string>.Success(
-            $"رسید تأیید شد و اشتراک کاربر برای {receipt.RequestedDurationDays} روز تمدید گردید");
+        return Result<string>.Success(successMessage);
     }
 }

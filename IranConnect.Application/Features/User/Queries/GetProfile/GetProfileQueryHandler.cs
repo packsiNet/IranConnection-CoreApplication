@@ -38,6 +38,7 @@ public class GetProfileQueryHandler
                 user.Subscription?.Status.ToString() ?? "Active",
                 user.Subscription?.ExpireDate ?? DateTime.UtcNow.AddYears(100),
                 user.Subscription?.DaysRemaining ?? 0,
-                user.Subscription?.IsActive ?? false)));
+                user.Subscription?.IsActive ?? false,
+                user.Subscription?.ShowAds ?? true)));
     }
 }

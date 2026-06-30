@@ -39,6 +39,11 @@ public class UpgradeSubscriptionCommandHandler
                 subscription.StartDate,
                 subscription.ExpireDate,
                 subscription.DaysRemaining,
-                subscription.IsActive));
+                subscription.IsActive,
+                subscription.ShowAds,
+                allowedApps.Select(a => new AllowedAppResponse(
+                    a.PackageName,
+                    a.NameEn,
+                    a.NameFa)).ToList()));
     }
 }

@@ -1,3 +1,4 @@
+using IranConnect.Application.Features.Subscription.Commands.RemoveAds;
 using IranConnect.Application.Features.Subscription.Commands.UpgradeSubscription;
 using IranConnect.Application.Features.Subscription.Queries.GetAppCatalog;
 using IranConnect.Application.Features.Subscription.Queries.GetSubscription;
@@ -37,6 +38,22 @@ public class SubscriptionController : BaseController
             new GetAppCatalogQuery(),
             cancellationToken);
 
+        return HandleResult(result);
+    }
+
+    /// <summary>حذف تبلیغات برای کاربر جاری (پس از تأیید پرداخت)</summary>
+    [HttpPost("remove-ads")]
+    [Authorize(Policy = "AdminOnly")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(404)]
+    [ProducesResponseType(409)]
+    public async Task<IActionResult> RemoveAds(
+        [FromQuery] Guid userId,
+        CancellationToken cancellationToken)
+    {
+        var result = await Mediator.Send(
+            new RemoveAdsCommand(userId),
+            cancellationToken);
         return HandleResult(result);
     }
 

@@ -20,4 +20,5 @@ public record SubscriptionInfo(
     string Status,
     DateTime ExpireDate,
     int DaysRemaining,
-    bool IsActive);
+    bool IsActive,
+    bool ShowAds);

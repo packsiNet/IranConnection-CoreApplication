@@ -12,6 +12,8 @@ public class Subscription : AuditableEntity
     public DateTime ExpireDate { get; private set; }
     public bool IsAutoRenew { get; private set; }
 
+    public bool ShowAds { get; private set; } = true;
+
     public bool IsActive => Status == SubscriptionStatus.Active
                          && ExpireDate > DateTime.UtcNow;
 
@@ -33,7 +35,8 @@ public class Subscription : AuditableEntity
             Plan = SubscriptionPlan.Free,
             Status = SubscriptionStatus.Active,
             StartDate = DateTime.UtcNow,
-            ExpireDate = DateTime.UtcNow.AddYears(100)
+            ExpireDate = DateTime.UtcNow.AddYears(100),
+            ShowAds = true
         };
     }
 
@@ -45,7 +48,8 @@ public class Subscription : AuditableEntity
             Plan = SubscriptionPlan.Premium,
             Status = SubscriptionStatus.Active,
             StartDate = DateTime.UtcNow,
-            ExpireDate = DateTime.UtcNow.AddDays(durationDays)
+            ExpireDate = DateTime.UtcNow.AddDays(durationDays),
+            ShowAds = false
         };
     }
 
@@ -53,10 +57,17 @@ public class Subscription : AuditableEntity
     {
         Plan = SubscriptionPlan.Premium;
         Status = SubscriptionStatus.Active;
+        ShowAds = false;
         StartDate = DateTime.UtcNow;
         ExpireDate = IsActive
             ? ExpireDate.AddDays(durationDays)
             : DateTime.UtcNow.AddDays(durationDays);
+    }
+
+    // Removes ads for Free plan users (paid ad-removal)
+    public void RemoveAds()
+    {
+        ShowAds = false;
     }
 
     public void Cancel()
@@ -69,5 +80,6 @@ public class Subscription : AuditableEntity
     {
         Status = SubscriptionStatus.Expired;
         Plan = SubscriptionPlan.Free;
+        ShowAds = true;
     }
 }

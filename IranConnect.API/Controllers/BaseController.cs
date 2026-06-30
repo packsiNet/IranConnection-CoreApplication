@@ -38,4 +38,18 @@ public abstract class BaseController : ControllerBase
 
     protected string? GetCurrentUserPlan()
         => User.FindFirst("plan")?.Value;
+
+    protected bool GetCurrentUserShowAds()
+    {
+        var value = User.FindFirst("showAds")?.Value;
+        return value != "false";
+    }
+
+    protected string? GetClientIpAddress()
+    {
+        var forwarded = Request.Headers["X-Forwarded-For"].FirstOrDefault();
+        if (!string.IsNullOrWhiteSpace(forwarded))
+            return forwarded.Split(',')[0].Trim();
+        return HttpContext.Connection.RemoteIpAddress?.ToString();
+    }
 }

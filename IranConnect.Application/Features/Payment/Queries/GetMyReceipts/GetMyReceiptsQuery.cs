@@ -10,6 +10,7 @@ public record MyReceiptResponse(
     string PayerFullName,
     string LastFourDigits,
     string Status,
+    string ReceiptType,
     int RequestedDurationDays,
     DateTime SubmittedAt,
     string? AdminNote,
