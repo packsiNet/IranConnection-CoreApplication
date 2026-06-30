@@ -261,53 +261,6 @@ public class AdminController : BaseController
         return HandleResult(result);
     }
 
-    /// <summary>آمار دانلودها و ورودها</summary>
-    [HttpGet("stats/downloads")]
-    [ProducesResponseType(typeof(DownloadStatsResponse), 200)]
-    public async Task<IActionResult> GetDownloadStats(
-        [FromQuery] DateTime? from = null,
-        [FromQuery] DateTime? to = null,
-        CancellationToken cancellationToken = default)
-    {
-        var result = await Mediator.Send(
-            new GetDownloadStatsQuery(from, to),
-            cancellationToken);
-
-        return HandleResult(result);
-    }
-
-    /// <summary>لیست نظرات</summary>
-    [HttpGet("reviews")]
-    [ProducesResponseType(typeof(PagedResult<AdminReviewItem>), 200)]
-    public async Task<IActionResult> GetReviews(
-        [FromQuery] bool? isApproved = null,
-        [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 20,
-        CancellationToken cancellationToken = default)
-    {
-        var result = await Mediator.Send(
-            new GetAllReviewsQuery(page, pageSize, isApproved),
-            cancellationToken);
-
-        return HandleResult(result);
-    }
-
-    /// <summary>تأیید یا رد نظر</summary>
-    [HttpPut("reviews/{reviewId}/approve")]
-    [ProducesResponseType(200)]
-    [ProducesResponseType(404)]
-    public async Task<IActionResult> ApproveReview(
-        Guid reviewId,
-        [FromQuery] bool approve = true,
-        CancellationToken cancellationToken = default)
-    {
-        var result = await Mediator.Send(
-            new ApproveReviewCommand(reviewId, approve),
-            cancellationToken);
-
-        return HandleResult(result);
-    }
-
     /// <summary>Download payment receipt file</summary>
     [HttpGet("receipts/{receiptId}/file")]
     public async Task<IActionResult> GetReceiptFile(

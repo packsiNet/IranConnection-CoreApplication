@@ -109,11 +109,13 @@ public class DeviceLoginCommandHandler
         }
 
         var plan = user.Subscription?.Plan.ToString() ?? "Free";
+        var showAds = user.Subscription?.ShowAds ?? true;
         var accessToken = _jwtService.GenerateToken(
             user.Id.ToString(),
             user.Email,
             plan,
-            user.IsAdmin);
+            user.IsAdmin,
+            showAds);
 
         return Result<LoginResponse>.Success(new LoginResponse(
             accessToken,
@@ -122,6 +124,7 @@ public class DeviceLoginCommandHandler
             user.Email,
             user.FullName,
             plan,
+            showAds,
             user.IsEmailVerified));
     }
 

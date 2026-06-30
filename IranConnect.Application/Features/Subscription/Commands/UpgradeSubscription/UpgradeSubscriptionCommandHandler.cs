@@ -1,6 +1,7 @@
 using IranConnect.Application.Common.Interfaces;
 using IranConnect.Application.Common.Models;
 using IranConnect.Application.Features.Subscription.Queries.GetSubscription;
+using IranConnect.Domain.Enums;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,9 +13,7 @@ public class UpgradeSubscriptionCommandHandler
     private readonly IApplicationDbContext _context;
 
     public UpgradeSubscriptionCommandHandler(IApplicationDbContext context)
-    {
-        _context = context;
-    }
+        => _context = context;
 
     public async Task<Result<SubscriptionResponse>> Handle(
         UpgradeSubscriptionCommand request,
@@ -32,6 +31,13 @@ public class UpgradeSubscriptionCommandHandler
         subscription.Upgrade(request.DurationDays);
         await _context.SaveChangesAsync(cancellationToken);
 
+        var isFreeplan = subscription.Plan == SubscriptionPlan.Free;
+        var allowedApps = await _context.IranianApps
+            .Where(a => a.IsActive && (!isFreeplan || a.IsFree))
+            .OrderBy(a => a.NameEn)
+            .Select(a => new AllowedAppResponse(a.PackageName, a.NameEn, a.NameFa))
+            .ToListAsync(cancellationToken);
+
         return Result<SubscriptionResponse>.Success(
             new SubscriptionResponse(
                 subscription.Plan.ToString(),
@@ -41,9 +47,6 @@ public class UpgradeSubscriptionCommandHandler
                 subscription.DaysRemaining,
                 subscription.IsActive,
                 subscription.ShowAds,
-                allowedApps.Select(a => new AllowedAppResponse(
-                    a.PackageName,
-                    a.NameEn,
-                    a.NameFa)).ToList()));
+                allowedApps));
     }
 }

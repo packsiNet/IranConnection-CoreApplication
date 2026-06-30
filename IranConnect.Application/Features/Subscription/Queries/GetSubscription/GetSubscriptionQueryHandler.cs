@@ -12,9 +12,7 @@ public class GetSubscriptionQueryHandler
     private readonly IApplicationDbContext _context;
 
     public GetSubscriptionQueryHandler(IApplicationDbContext context)
-    {
-        _context = context;
-    }
+        => _context = context;
 
     public async Task<Result<SubscriptionResponse>> Handle(
         GetSubscriptionQuery request,
@@ -37,6 +35,13 @@ public class GetSubscriptionQueryHandler
             await _context.SaveChangesAsync(cancellationToken);
         }
 
+        var isFreeplan = subscription.Plan == SubscriptionPlan.Free;
+        var allowedApps = await _context.IranianApps
+            .Where(a => a.IsActive && (!isFreeplan || a.IsFree))
+            .OrderBy(a => a.NameEn)
+            .Select(a => new AllowedAppResponse(a.PackageName, a.NameEn, a.NameFa))
+            .ToListAsync(cancellationToken);
+
         return Result<SubscriptionResponse>.Success(
             new SubscriptionResponse(
                 subscription.Plan.ToString(),
@@ -46,9 +51,6 @@ public class GetSubscriptionQueryHandler
                 subscription.DaysRemaining,
                 subscription.IsActive,
                 subscription.ShowAds,
-                allowedApps.Select(a => new AllowedAppResponse(
-                    a.PackageName,
-                    a.NameEn,
-                    a.NameFa)).ToList()));
+                allowedApps));
     }
 }
