@@ -117,6 +117,10 @@ public class DeviceLoginCommandHandler
             user.IsAdmin,
             showAds);
 
+        var appSettings = await _context.AppSettings
+            .FirstOrDefaultAsync(cancellationToken: cancellationToken);
+        var adsEnabled = appSettings?.AdsEnabled ?? true;
+
         return Result<LoginResponse>.Success(new LoginResponse(
             accessToken,
             refreshToken.Token,
@@ -125,7 +129,8 @@ public class DeviceLoginCommandHandler
             user.FullName,
             plan,
             showAds,
-            user.IsEmailVerified));
+            user.IsEmailVerified,
+            adsEnabled));
     }
 
     private static string HashDeviceId(string deviceId)

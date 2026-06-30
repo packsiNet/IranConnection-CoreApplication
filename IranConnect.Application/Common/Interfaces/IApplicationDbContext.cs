@@ -14,6 +14,7 @@ public interface IApplicationDbContext
     DbSet<IranianApp> IranianApps { get; }
     DbSet<StatEvent> StatEvents { get; }
     DbSet<Review> Reviews { get; }
+    DbSet<AppSettings> AppSettings { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
 }

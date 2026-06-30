@@ -7,6 +7,8 @@ using IranConnect.Application.Features.Admin.Commands.SetAppTier;
 using IranConnect.Application.Features.Admin.Commands.UpdateApp;
 using IranConnect.Application.Features.Admin.Queries.GetApps;
 using IranConnect.Application.Features.Admin.Commands.ApproveReview;
+using IranConnect.Application.Features.Admin.Commands.SetAdsEnabled;
+using IranConnect.Application.Features.Admin.Queries.GetAppSettings;
 using IranConnect.Application.Features.Admin.Commands.DeactivateUser;
 using IranConnect.Application.Features.Admin.Commands.DeletePeer;
 using IranConnect.Application.Features.Admin.Commands.DeleteUser;
@@ -470,6 +472,29 @@ public class AdminController : BaseController
     {
         var result = await Mediator.Send(
             new SetAppTierCommand(id, request.IsFree), cancellationToken);
+        return HandleResult(result);
+    }
+
+    // ── App Settings ────────────────────────────────────────────────────────
+
+    /// <summary>تنظیمات کلی اپلیکیشن</summary>
+    [HttpGet("settings")]
+    [ProducesResponseType(typeof(AppSettingsResponse), 200)]
+    public async Task<IActionResult> GetAppSettings(CancellationToken cancellationToken)
+    {
+        var result = await Mediator.Send(new GetAppSettingsQuery(), cancellationToken);
+        return HandleResult(result);
+    }
+
+    /// <summary>فعال/غیرفعال کردن تبلیغات در اپلیکیشن</summary>
+    [HttpPut("settings/ads-enabled")]
+    [ProducesResponseType(typeof(bool), 200)]
+    public async Task<IActionResult> SetAdsEnabled(
+        [FromBody] SetAdsEnabledRequest request,
+        CancellationToken cancellationToken)
+    {
+        var result = await Mediator.Send(
+            new SetAdsEnabledCommand(request.Enabled), cancellationToken);
         return HandleResult(result);
     }
 }

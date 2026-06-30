@@ -17,4 +17,5 @@ public record LoginResponse(
     string? FullName,
     string Plan,
     bool ShowAds,
-    bool IsEmailVerified);
+    bool IsEmailVerified,
+    bool AdsEnabled);

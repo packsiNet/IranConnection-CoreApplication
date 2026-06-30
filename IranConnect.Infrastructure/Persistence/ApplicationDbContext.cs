@@ -23,6 +23,7 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<IranianApp> IranianApps => Set<IranianApp>();
     public DbSet<StatEvent> StatEvents => Set<StatEvent>();
     public DbSet<Review> Reviews => Set<Review>();
+    public DbSet<AppSettings> AppSettings => Set<AppSettings>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -40,6 +41,13 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
             IsAdmin = true,
             IsDeviceUser = false,
             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+        });
+
+        builder.Entity<AppSettings>().HasData(new
+        {
+            Id = Domain.Entities.AppSettings.SingletonId,
+            AdsEnabled = true,
+            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)
         });
 
         base.OnModelCreating(builder);

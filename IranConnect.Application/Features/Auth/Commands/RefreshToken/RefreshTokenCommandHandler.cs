@@ -55,6 +55,10 @@ public class RefreshTokenCommandHandler
             refreshToken.User.IsAdmin,
             showAds);
 
+        var appSettings = await _context.AppSettings
+            .FirstOrDefaultAsync(cancellationToken: cancellationToken);
+        var adsEnabled = appSettings?.AdsEnabled ?? true;
+
         return Result<LoginResponse>.Success(new LoginResponse(
             accessToken,
             newRefreshToken.Token,
@@ -63,6 +67,7 @@ public class RefreshTokenCommandHandler
             refreshToken.User.FullName,
             plan,
             showAds,
-            refreshToken.User.IsEmailVerified));
+            refreshToken.User.IsEmailVerified,
+            adsEnabled));
     }
 }

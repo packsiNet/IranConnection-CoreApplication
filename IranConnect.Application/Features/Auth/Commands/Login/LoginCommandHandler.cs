@@ -61,6 +61,10 @@ public class LoginCommandHandler
         var accessToken = _jwtService.GenerateToken(
             user.Id.ToString(), user.Email, plan, user.IsAdmin, showAds);
 
+        var appSettings = await _context.AppSettings
+            .FirstOrDefaultAsync(cancellationToken: cancellationToken);
+        var adsEnabled = appSettings?.AdsEnabled ?? true;
+
         return Result<LoginResponse>.Success(new LoginResponse(
             accessToken,
             refreshToken.Token,
@@ -69,6 +73,7 @@ public class LoginCommandHandler
             user.FullName,
             plan,
             showAds,
-            user.IsEmailVerified));
+            user.IsEmailVerified,
+            adsEnabled));
     }
 }
