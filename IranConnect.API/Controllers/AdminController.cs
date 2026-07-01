@@ -2,7 +2,11 @@ using IranConnect.API.Models.Requests;
 using IranConnect.Application.Common.Interfaces;
 using IranConnect.Application.Features.Admin.Commands.ActivateUser;
 using IranConnect.Application.Features.Admin.Commands.CreateApp;
+using IranConnect.Application.Features.Admin.Commands.CreateBackup;
 using IranConnect.Application.Features.Admin.Commands.DeleteApp;
+using IranConnect.Application.Features.Admin.Commands.DeleteBackup;
+using IranConnect.Application.Features.Admin.Commands.RestoreBackup;
+using IranConnect.Application.Features.Admin.Queries.GetBackups;
 using IranConnect.Application.Features.Admin.Commands.SetAppTier;
 using IranConnect.Application.Features.Admin.Commands.UpdateApp;
 using IranConnect.Application.Features.Admin.Queries.GetApps;
@@ -40,9 +44,15 @@ namespace IranConnect.API.Controllers;
 public class AdminController : BaseController
 {
     private readonly IFileStorageService _fileStorage;
+    private readonly IDatabaseBackupService _backupService;
 
-    public AdminController(IFileStorageService fileStorage)
-        => _fileStorage = fileStorage;
+    public AdminController(
+        IFileStorageService fileStorage,
+        IDatabaseBackupService backupService)
+    {
+        _fileStorage = fileStorage;
+        _backupService = backupService;
+    }
 
     /// <summary>List users</summary>
     [HttpGet("users")]
@@ -495,6 +505,68 @@ public class AdminController : BaseController
     {
         var result = await Mediator.Send(
             new SetAdsEnabledCommand(request.Enabled), cancellationToken);
+        return HandleResult(result);
+    }
+
+    // ── Database backups ─────────────────────────────────────────────────────
+
+    /// <summary>ساخت بک‌آپ جدید از دیتابیس</summary>
+    [HttpPost("backups")]
+    [ProducesResponseType(typeof(BackupFileInfo), 201)]
+    [ProducesResponseType(500)]
+    public async Task<IActionResult> CreateBackup(CancellationToken cancellationToken)
+    {
+        var result = await Mediator.Send(new CreateBackupCommand(), cancellationToken);
+        return HandleResult(result);
+    }
+
+    /// <summary>لیست بک‌آپ‌های موجود (جدیدترین اول)</summary>
+    [HttpGet("backups")]
+    [ProducesResponseType(typeof(List<BackupFileInfo>), 200)]
+    public async Task<IActionResult> GetBackups(CancellationToken cancellationToken)
+    {
+        var result = await Mediator.Send(new GetBackupsQuery(), cancellationToken);
+        return HandleResult(result);
+    }
+
+    /// <summary>دانلود فایل بک‌آپ</summary>
+    [HttpGet("backups/{fileName}/download")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(404)]
+    public IActionResult DownloadBackup(string fileName)
+    {
+        if (!_backupService.Exists(fileName))
+            return NotFound(new { error = "فایل بک‌آپ پیدا نشد" });
+
+        var fullPath = _backupService.GetFullPath(fileName);
+        var stream = System.IO.File.OpenRead(fullPath);
+        return File(stream, "application/octet-stream", fileName);
+    }
+
+    /// <summary>حذف یک فایل بک‌آپ</summary>
+    [HttpDelete("backups/{fileName}")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(404)]
+    public async Task<IActionResult> DeleteBackup(
+        string fileName,
+        CancellationToken cancellationToken)
+    {
+        var result = await Mediator.Send(
+            new DeleteBackupCommand(fileName), cancellationToken);
+        return HandleResult(result);
+    }
+
+    /// <summary>بازیابی دیتابیس از یک بک‌آپ (عملیات مخرب و غیرقابل بازگشت)</summary>
+    [HttpPost("backups/{fileName}/restore")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(404)]
+    [ProducesResponseType(500)]
+    public async Task<IActionResult> RestoreBackup(
+        string fileName,
+        CancellationToken cancellationToken)
+    {
+        var result = await Mediator.Send(
+            new RestoreBackupCommand(fileName), cancellationToken);
         return HandleResult(result);
     }
 }

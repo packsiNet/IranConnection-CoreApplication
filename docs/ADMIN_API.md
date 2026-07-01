@@ -332,6 +332,67 @@ Body — `SetAppTierRequest`:
 
 ---
 
+# بک‌آپ و بازیابی دیتابیس
+
+سرویس بک‌آپ‌گیری از دیتابیس PostgreSQL. زیرِ کاپوت از ابزارهای `pg_dump` / `pg_restore` استفاده می‌شه (فرمت custom archive، فشرده‌شده). فایل‌ها در مسیر `Backup:Path` سرور (پیش‌فرض `backups/`) ذخیره می‌شن.
+
+> ⚠️ **بازیابی مخرب و غیرقابل بازگشت است.** endpoint restore با فلگ `--clean` اول آبجکت‌های فعلی رو drop می‌کنه بعد از بک‌آپ بازسازی می‌کنه. قبل از restore حتماً یک بک‌آپ تازه بگیر و از کاربر تأیید صریح بگیر.
+> نیازمندی سرور: ابزارهای client پستگرس (`pg_dump`, `pg_restore`) روی هاست API نصب باشن و نسخه‌شون با نسخه‌ی سرور DB سازگار باشه.
+
+مدل `BackupFileInfo`:
+```json
+{
+  "fileName": "backup_20260701_143022.dump",
+  "sizeBytes": 5242880,
+  "createdAtUtc": "2026-07-01T14:30:22Z"
+}
+```
+> `fileName` شناسه‌ی هر بک‌آپ در همه‌ی عملیات (دانلود/حذف/بازیابی). فرمت ثابت `backup_yyyyMMdd_HHmmss.dump` بر اساس UTC. نام فایل در سمت سرور اعتبارسنجی می‌شه (path traversal رد می‌شه).
+
+## POST `/api/admin/backups` — ساخت بک‌آپ جدید
+بدون body. یک بک‌آپ کامل از دیتابیس می‌سازه (ممکنه چند ثانیه طول بکشه).
+Response 201 + `BackupFileInfo`:
+```json
+{ "fileName": "backup_20260701_143022.dump", "sizeBytes": 5242880, "createdAtUtc": "2026-07-01T14:30:22Z" }
+```
+خطا: 500 `{ "error": "ساخت بک‌آپ ناموفق بود" }` (مثلاً pg_dump نصب نیست یا اتصال DB قطعه).
+
+## GET `/api/admin/backups` — لیست بک‌آپ‌ها
+بدون پارامتر. آرایه‌ی `BackupFileInfo`، جدیدترین اول.
+Response 200:
+```json
+[
+  { "fileName": "backup_20260701_143022.dump", "sizeBytes": 5242880, "createdAtUtc": "2026-07-01T14:30:22Z" },
+  { "fileName": "backup_20260630_020000.dump", "sizeBytes": 5100000, "createdAtUtc": "2026-06-30T02:00:00Z" }
+]
+```
+> برای نمایش سایز به کاربر، `sizeBytes` رو سمت فرانت به MB/GB تبدیل کن.
+
+## GET `/api/admin/backups/{fileName}/download` — دانلود فایل بک‌آپ
+فایل باینری برمی‌گردونه (`application/octet-stream`) با `Content-Disposition: attachment`. برای دانلود مستقیم از مرورگر، لینک باید header توکن داشته باشه؛ ساده‌ترین راه fetch با `Authorization` و ساخت blob.
+```js
+const res = await fetch(`/api/admin/backups/${fileName}/download`, {
+  headers: { Authorization: `Bearer ${token}` }
+});
+const blob = await res.blob();
+const url = URL.createObjectURL(blob);
+const a = document.createElement('a');
+a.href = url; a.download = fileName; a.click();
+URL.revokeObjectURL(url);
+```
+خطا: 404 اگر فایل نباشه.
+
+## DELETE `/api/admin/backups/{fileName}` — حذف بک‌آپ
+Response 200 `{ }` با پیام موفقیت (بدنه‌ی متنی حذف). خطا: 404 اگر فایل نباشه · 400 اگر نام فایل نامعتبر.
+
+## POST `/api/admin/backups/{fileName}/restore` — بازیابی دیتابیس
+⚠️ عملیات مخرب. دیتابیس فعلی رو با محتوای بک‌آپ جایگزین می‌کنه.
+بدون body. Response 200 با پیام موفقیت.
+خطا: 404 اگر فایل نباشه · 400 نام نامعتبر · 500 اگر restore شکست بخوره (`{ "error": "بازیابی دیتابیس ناموفق بود" }`).
+> پیشنهاد UX: مودال تأیید دو مرحله‌ای + تایپ نام فایل برای تأیید. بعد از restore موفق، بهتره کاربر ادمین دوباره login کنه (session/توکن‌ها ممکنه با داده‌ی بازیابی‌شده ناسازگار باشن).
+
+---
+
 # جدول خلاصه
 
 | # | Method | Path | توضیح |
@@ -362,6 +423,11 @@ Body — `SetAppTierRequest`:
 | 24 | PUT | `/admin/apps/{id}` | ویرایش اپ (نام/package) |
 | 25 | DELETE | `/admin/apps/{id}` | حذف اپ |
 | 26 | PUT | `/admin/apps/{id}/tier` | تغییر Free/Premium |
+| 27 | POST | `/admin/backups` | ساخت بک‌آپ جدید از دیتابیس |
+| 28 | GET | `/admin/backups` | لیست بک‌آپ‌ها |
+| 29 | GET | `/admin/backups/{fileName}/download` | دانلود فایل بک‌آپ (باینری) |
+| 30 | DELETE | `/admin/backups/{fileName}` | حذف بک‌آپ |
+| 31 | POST | `/admin/backups/{fileName}/restore` | بازیابی دیتابیس (⚠️ مخرب) |
 
 > همه با `Authorization: Bearer <token>` (role=Admin). تاریخ‌ها ISO-8601 UTC. مقادیر `*Human` رشته‌ی آماده‌ی نمایش، مقادیر خام بایت برای محاسبه.
 > کاتالوگ عمومی کلاینت (بدون ادمین): `GET /api/subscription/apps`.

@@ -29,6 +29,7 @@ public static class DependencyInjection
         services.AddScoped<IFileStorageService, LocalFileStorageService>();
         services.AddScoped<IWireGuardService, WireGuardService>();
         services.AddScoped<IVpnConfigService, VpnConfigService>();
+        services.AddScoped<IDatabaseBackupService, PostgresBackupService>();
         // Seeds the Iranian app catalog into the DB on first run (if empty).
         services.AddHostedService<IranianAppSeeder>();
         // Startup resync runs first so wg0 matches the DB before stats polling.
