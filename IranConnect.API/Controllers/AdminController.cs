@@ -5,6 +5,7 @@ using IranConnect.Application.Features.Admin.Commands.CreateApp;
 using IranConnect.Application.Features.Admin.Commands.CreateBackup;
 using IranConnect.Application.Features.Admin.Commands.DeleteApp;
 using IranConnect.Application.Features.Admin.Commands.DeleteBackup;
+using IranConnect.Application.Features.Admin.Commands.FactoryReset;
 using IranConnect.Application.Features.Admin.Commands.RestoreBackup;
 using IranConnect.Application.Features.Admin.Queries.GetBackups;
 using IranConnect.Application.Features.Admin.Commands.SetAppTier;
@@ -567,6 +568,22 @@ public class AdminController : BaseController
     {
         var result = await Mediator.Send(
             new RestoreBackupCommand(fileName), cancellationToken);
+        return HandleResult(result);
+    }
+
+    // ── Factory reset ────────────────────────────────────────────────────────
+
+    /// <summary>ریست کامل دیتابیس (⚠️ مخرب). فقط داده‌ی seed و حساب ادمین می‌ماند. نیازمند رمز اختصاصی.</summary>
+    [HttpPost("factory-reset")]
+    [ProducesResponseType(typeof(FactoryResetResult), 200)]
+    [ProducesResponseType(401)]
+    [ProducesResponseType(500)]
+    public async Task<IActionResult> FactoryReset(
+        [FromBody] FactoryResetRequest request,
+        CancellationToken cancellationToken)
+    {
+        var result = await Mediator.Send(
+            new FactoryResetCommand(request.Password), cancellationToken);
         return HandleResult(result);
     }
 }
