@@ -9,6 +9,7 @@ using IranConnect.Application.Features.Admin.Commands.FactoryReset;
 using IranConnect.Application.Features.Admin.Commands.RestoreBackup;
 using IranConnect.Application.Features.Admin.Queries.GetBackups;
 using IranConnect.Application.Features.Admin.Commands.SetAppTier;
+using IranConnect.Application.Features.Admin.Commands.SetAppVersions;
 using IranConnect.Application.Features.Admin.Commands.UpdateApp;
 using IranConnect.Application.Features.Admin.Queries.GetApps;
 using IranConnect.Application.Features.Admin.Commands.ApproveReview;
@@ -506,6 +507,20 @@ public class AdminController : BaseController
     {
         var result = await Mediator.Send(
             new SetAdsEnabledCommand(request.Enabled), cancellationToken);
+        return HandleResult(result);
+    }
+
+    /// <summary>ویرایش نسخه اپ و نسخه کاتالوگ اپ‌های ایرانی</summary>
+    [HttpPut("settings/versions")]
+    [ProducesResponseType(typeof(AppVersionsResponse), 200)]
+    [ProducesResponseType(400)]
+    public async Task<IActionResult> SetAppVersions(
+        [FromBody] SetAppVersionsRequest request,
+        CancellationToken cancellationToken)
+    {
+        var result = await Mediator.Send(
+            new SetAppVersionsCommand(request.Version, request.IranianAppsUpdateVersion),
+            cancellationToken);
         return HandleResult(result);
     }
 

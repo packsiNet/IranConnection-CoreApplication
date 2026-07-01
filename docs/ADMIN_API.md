@@ -332,6 +332,70 @@ Body — `SetAppTierRequest`:
 
 ---
 
+# نسخه اپ (Version) و نسخه کاتالوگ
+
+دو مقدار متنی در `AppSettings` نگهداری می‌شن:
+- `version` — نسخه‌ی اپلیکیشن (مثل `1.0.0`)
+- `iranianAppsUpdateVersion` — نشانگر نسخه‌ی کاتالوگ اپ‌های ایرانی؛ کلاینت با مقایسه با نسخه‌ی محلی خودش تصمیم به آپدیت لیست اپ‌ها می‌گیره
+
+## بخش موبایل — endpoint عمومی (بدون auth)
+
+### GET `/api/app/config`
+بدون هدر `Authorization`. برای چک آپدیت و گرفتن پیکربندی در استارتاپ اپ موبایل.
+
+Response 200:
+```json
+{
+  "adsEnabled": true,
+  "version": "1.0.0",
+  "iranianAppsUpdateVersion": "1.0.0"
+}
+```
+- `adsEnabled` — نمایش تبلیغات در اپ فعال است یا نه
+- `version` — نسخه اپ
+- `iranianAppsUpdateVersion` — نسخه کاتالوگ اپ‌های ایرانی
+
+> همیشه 200 برمی‌گردونه (اگر رکورد تنظیمات نباشه، پیش‌فرض `adsEnabled=true`، نسخه‌ها `1.0.0`).
+> نمونه مصرف موبایل:
+> ```js
+> const res = await fetch(`${BASE}/api/app/config`); // بدون توکن
+> const { adsEnabled, version, iranianAppsUpdateVersion } = await res.json();
+> if (version !== localVersion) showUpdatePrompt();
+> if (iranianAppsUpdateVersion !== localAppsVersion) refreshAppCatalog();
+> if (adsEnabled) initAds();
+> ```
+
+## بخش ادمین — پیاده‌سازی
+
+### GET `/api/admin/settings`
+تنظیمات کامل اپ (نیاز به توکن ادمین).
+Response 200 — `AppSettingsResponse`:
+```json
+{
+  "adsEnabled": true,
+  "version": "1.0.0",
+  "iranianAppsUpdateVersion": "1.0.0"
+}
+```
+
+### PUT `/api/admin/settings/versions` — ویرایش نسخه‌ها
+Body — `SetAppVersionsRequest`:
+```json
+{
+  "version": "1.2.0",
+  "iranianAppsUpdateVersion": "1.1.0"
+}
+```
+هر دو فیلد اجباری‌ان (خالی → 400). حداکثر ۳۲ کاراکتر.
+Response 200 — `AppVersionsResponse`:
+```json
+{ "version": "1.2.0", "iranianAppsUpdateVersion": "1.1.0" }
+```
+خطا: 400 `{ "error": "مقدار نسخه نمی‌تواند خالی باشد" }`.
+> جریان: ادمین کاتالوگ اپ‌های ایرانی رو آپدیت می‌کنه → بعد `iranianAppsUpdateVersion` رو بالا می‌بره تا کلاینت‌ها لیست جدید رو بگیرن. نسخه‌ی اپ (`version`) هم موقع انتشار build جدید دستی به‌روز می‌شه.
+
+---
+
 # بک‌آپ و بازیابی دیتابیس
 
 سرویس بک‌آپ‌گیری از دیتابیس PostgreSQL. زیرِ کاپوت از ابزارهای `pg_dump` / `pg_restore` استفاده می‌شه (فرمت custom archive، فشرده‌شده). فایل‌ها در مسیر `Backup:Path` سرور (پیش‌فرض `backups/`) ذخیره می‌شن.
@@ -468,6 +532,10 @@ Response 200 — `FactoryResetResult`:
 | 30 | DELETE | `/admin/backups/{fileName}` | حذف بک‌آپ |
 | 31 | POST | `/admin/backups/{fileName}/restore` | بازیابی دیتابیس (⚠️ مخرب) |
 | 32 | POST | `/admin/factory-reset` | ریست کارخانه‌ای — پاک‌سازی کل دیتای کاربری (⚠️ مخرب، رمز اختصاصی) |
+| 33 | GET | `/admin/settings` | تنظیمات اپ (adsEnabled + نسخه‌ها) |
+| 34 | PUT | `/admin/settings/ads-enabled` | فعال/غیرفعال تبلیغات |
+| 35 | PUT | `/admin/settings/versions` | ویرایش version و iranianAppsUpdateVersion |
+| — | GET | `/app/config` | **عمومی (بدون auth)** — adsEnabled + نسخه اپ و کاتالوگ برای موبایل |
 
 > همه با `Authorization: Bearer <token>` (role=Admin). تاریخ‌ها ISO-8601 UTC. مقادیر `*Human` رشته‌ی آماده‌ی نمایش، مقادیر خام بایت برای محاسبه.
 > کاتالوگ عمومی کلاینت (بدون ادمین): `GET /api/subscription/apps`.

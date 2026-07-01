@@ -10,6 +10,10 @@ public class AppSettingsConfiguration : IEntityTypeConfiguration<AppSettings>
     {
         builder.HasKey(s => s.Id);
         builder.Property(s => s.AdsEnabled).IsRequired();
+        builder.Property(s => s.Version)
+            .IsRequired().HasMaxLength(32).HasDefaultValue("1.0.0");
+        builder.Property(s => s.IranianAppsUpdateVersion)
+            .IsRequired().HasMaxLength(32).HasDefaultValue("1.0.0");
         builder.Property(s => s.UpdatedAt).IsRequired();
     }
 }

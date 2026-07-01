@@ -5,4 +5,7 @@ namespace IranConnect.Application.Features.Admin.Queries.GetAppSettings;
 
 public record GetAppSettingsQuery : IRequest<Result<AppSettingsResponse>>;
 
-public record AppSettingsResponse(bool AdsEnabled);
+public record AppSettingsResponse(
+    bool AdsEnabled,
+    string Version,
+    string IranianAppsUpdateVersion);
